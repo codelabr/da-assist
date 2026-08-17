@@ -67,7 +67,43 @@ Add-in hiện ngay ở thẻ **Trang đầu**, nhóm **DA Assist**, không phả
 Cách này chỉ giữ trong phiên làm việc: đóng trình duyệt là add-in mất, tải lên lại là
 xong. Vì vậy nó tốt cho việc thử chứ không dùng để phát cho học viên.
 
-### Trên Windows
+### Trên Windows — một dòng lệnh
+
+Cách này **không cần quyền quản trị** và không phải chia sẻ thư mục qua mạng.
+
+Mở **Windows PowerShell** (bấm phím Windows, gõ `powershell`, Enter) rồi dán dòng sau:
+
+```powershell
+iex (New-Object Net.WebClient).DownloadString('https://codelabr.github.io/da-assist/cai-dat.ps1')
+```
+
+Kịch bản in ra từng bước nó làm. Xong thì **đóng hẳn Excel rồi mở lại**; add-in hiện
+ở thẻ **Trang đầu**, nhóm **DA Assist**.
+
+Gỡ ra cũng một dòng:
+
+```powershell
+iex (New-Object Net.WebClient).DownloadString('https://codelabr.github.io/da-assist/go-cai-dat.ps1')
+```
+
+**Nên đọc kịch bản trước khi chạy.** Dán một địa chỉ lạ vào PowerShell rồi chạy ngay
+là thói quen nguy hiểm, kể cả khi lần này an toàn. Mở hai địa chỉ sau trong trình
+duyệt để đọc — mỗi tệp khoảng bảy mươi dòng, có chú thích tiếng Việt:
+
+- `https://codelabr.github.io/da-assist/cai-dat.ps1`
+- `https://codelabr.github.io/da-assist/go-cai-dat.ps1`
+
+Kịch bản cài làm đúng ba việc: tải `manifest.xml` về `%LOCALAPPDATA%\DaAssist`, kiểm
+tệp ấy có phải XML hợp lệ và có đúng mã định danh của add-in, rồi khai đường dẫn tệp
+vào một mục trong sổ đăng ký của **riêng tài khoản Windows của bạn**
+(`HKEY_CURRENT_USER`). Nó không cài dịch vụ, không mở cổng mạng, không đụng đến tệp
+dữ liệu nào. Kịch bản gỡ xoá đúng hai thứ ấy — và nếu bạn có lưu tệp riêng vào thư
+mục đó thì nó giữ lại, chỉ xoá bản kê khai.
+
+### Trên Windows — cách thủ công, khi cần phát cho cả lớp
+
+Cách một dòng lệnh khai một đường dẫn cố định trên từng máy, phù hợp khi mỗi người tự
+cài. Nếu bạn muốn phát cho cả lớp từ một thư mục dùng chung thì dùng cách dưới đây.
 
 1. Tạo thư mục chứa tệp kê khai, ví dụ `D:\CongCu\DaAssist\`, rồi chép
    `manifest.xml` vào đó.
@@ -107,6 +143,9 @@ Sau khi cài, add-in hiện ở thẻ **Trang đầu**, nhóm **DA Assist**.
 | Bảng điều khiển hiện ra trắng trơn | Máy đang không vào được mạng ở **lần mở đầu tiên**. Trang giao diện tải về một lần rồi lưu đệm; sau đó chạy được cả khi mất mạng |
 | macOS: không tìm thấy thư mục `wef` | Chưa giữ phím Option khi bấm menu **Đi**, nên thư mục Thư viện vẫn ẩn |
 | Excel báo add-in không hợp lệ | Tệp `manifest.xml` tải về bị hỏng — tải lại từ kho, và mở ra xem dòng đầu có đúng là `<?xml version="1.0"...` chứ không phải trang HTML báo lỗi |
+| Dòng lệnh báo `Unable to connect` hoặc lỗi về SSL | Máy dùng Windows bản cũ nên PowerShell chưa bật TLS 1.2. Chạy `[Net.ServicePointManager]::SecurityProtocol = 'Tls12'` trước, rồi dán lại dòng lệnh cài |
+| Dòng lệnh chạy xong nhưng Excel vẫn không thấy add-in | Chưa đóng hẳn Excel. Hoặc máy bị chính sách của cơ quan chặn add-in kiểu này — khi đó dùng Cách 1, bản chạy trên trình duyệt |
+| Tên add-in trong Excel hiện ký tự lạ | Bản kê khai đã bị một công cụ nào đó ghi lại sai bảng mã. Gỡ rồi cài lại bằng dòng lệnh — kịch bản tải theo byte nên không làm hỏng dấu tiếng Việt |
 
 ---
 

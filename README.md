@@ -5,8 +5,32 @@ của công tác phòng, chống HIV/AIDS.
 
 **Chạy hoàn toàn trong máy. Không gọi mô hình ngôn ngữ. Không gửi dữ liệu đi đâu.**
 
-- Phương án đầy đủ: [`../../PHUONG_AN_CONG_CU_EXCEL.md`](../../PHUONG_AN_CONG_CU_EXCEL.md)
-- Hướng dẫn cài đặt: [`tai-lieu/cai-dat.md`](tai-lieu/cai-dat.md)
+## Dùng ngay
+
+**Không cài gì** — mở [`codelabr.github.io/da-assist/docs/`](https://codelabr.github.io/da-assist/docs/)
+rồi kéo tệp `.xlsx` vào trang. Tệp được đọc ngay trong trình duyệt trên máy bạn; có
+thể ngắt mạng sau khi trang đã mở để tự kiểm chứng.
+
+**Cài thành add-in trong Excel trên Windows** — một dòng trong PowerShell, không cần
+quyền quản trị:
+
+```powershell
+iex (New-Object Net.WebClient).DownloadString('https://codelabr.github.io/da-assist/cai-dat.ps1')
+```
+
+Gỡ ra:
+
+```powershell
+iex (New-Object Net.WebClient).DownloadString('https://codelabr.github.io/da-assist/go-cai-dat.ps1')
+```
+
+Nên đọc [`cai-dat.ps1`](cai-dat.ps1) trước khi chạy — dán một địa chỉ lạ vào PowerShell
+rồi chạy ngay là thói quen nguy hiểm, kể cả khi lần này an toàn. Kịch bản làm đúng ba
+việc: tải bản kê khai về `%LOCALAPPDATA%\DaAssist`, kiểm nó là XML hợp lệ và có đúng mã
+định danh của add-in, rồi khai đường dẫn vào sổ đăng ký của **riêng tài khoản Windows
+của bạn**. Không cài dịch vụ, không mở cổng mạng, không đụng tệp dữ liệu nào.
+
+Hướng dẫn đầy đủ cho cả macOS và cách phát cho cả lớp: [`tai-lieu/cai-dat.md`](tai-lieu/cai-dat.md).
 
 ---
 
@@ -114,6 +138,8 @@ Mọi tệp mẫu của bộ thử đều sinh ra lúc chạy.
 ```
 da-assist/
 ├─ index.html       Trang gốc, chuyển hướng sang docs/index.html
+├─ cai-dat.ps1      Cài add-in bằng một dòng lệnh, không cần quyền quản trị
+├─ go-cai-dat.ps1   Gỡ add-in bằng một dòng lệnh
 ├─ docs/            Trang GitHub Pages phục vụ
 │  ├─ index.html       vỏ HTML — kéo tệp vào là chạy, không cài đặt
 │  ├─ khung-addin.html bảng điều khiển của add-in trong Excel
@@ -456,7 +482,7 @@ dòng**, ghi tệp 1 MB trong 0,23 giây. `openpyxl` mở lại được, mã CR
 
 ---
 
-## Bảy điều đã trả giá mới biết, ghi lại để không lặp
+## Tám điều đã trả giá mới biết, ghi lại để không lặp
 
 **Bỏ dấu tiếng Việt để so tên cột thì đúng, để so giá trị dữ liệu thì sai.** Trên
 tệp thật, `Xã Vĩnh Thanh` và `Xã Vĩnh Thạnh` bị gộp làm một. Đó có thể là hai xã
@@ -497,3 +523,12 @@ phải kèm theo việc làm được: ở đây là tám phép kiểm số họ
 3" ở phần I rồi lặp lại đúng dãy ấy ở phần II. Không ghi phần thì mục 1.1 của phần II
 đi tìm dòng cha ở phần I, và một biểu điền đúng bị báo là dòng con vượt dòng cha —
 đúng loại báo nhầm khiến người dùng thôi đọc cảnh báo.
+
+**Bộ thử chạy được không có nghĩa là add-in cài được.** Bộ Excel giả đo lớp Office.js
+nhưng **không đọc bản kê khai**, nên nó không thấy được rằng `<VersionOverrides>` đang
+khai không gian tên `mailappversionoverrides` của add-in thư điện tử. Trong không gian
+tên ấy, `<Host xsi:type="Workbook">` không hợp lệ; Excel loại cả tệp và chỉ báo một câu
+chung chung không nói sai ở đâu. Đúng phải là `taskpaneappversionoverrides`. Bản kê khai
+cần một phép soát riêng: cú pháp XML, thứ tự phần tử con theo lược đồ, `Id` là GUID,
+`Version` bốn phần, mọi địa chỉ là https, mọi `resid` được dùng đều có khai, và mọi địa
+chỉ trang đều nằm trong `AppDomains`.
