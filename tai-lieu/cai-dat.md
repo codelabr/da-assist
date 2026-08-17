@@ -51,6 +51,22 @@ xoá tệp ấy thì add-in biến mất khỏi Excel.
 
 Ví dụ nên dùng: `D:\CongCu\DaAssist\` trên Windows.
 
+### Cách nhanh nhất để thử: Excel trên web
+
+Đường này **không cần chia sẻ thư mục và không cần quyền quản trị máy**, nên dùng để
+thử xem add-in chạy được không trước khi cài lên Excel trên máy.
+
+1. Mở `https://excel.cloud.microsoft` và đăng nhập bằng tài khoản Microsoft 365 của
+   bạn, rồi mở một bảng tính bất kỳ.
+2. Vào **Chèn** → **Add-in** → **Add-in của tôi**.
+3. Bấm **Tải lên add-in của tôi** ở góc trên bên phải hộp thoại.
+4. Chọn tệp `manifest.xml`, bấm **Tải lên**.
+
+Add-in hiện ngay ở thẻ **Trang đầu**, nhóm **DA Assist**, không phải mở lại Excel.
+
+Cách này chỉ giữ trong phiên làm việc: đóng trình duyệt là add-in mất, tải lên lại là
+xong. Vì vậy nó tốt cho việc thử chứ không dùng để phát cho học viên.
+
 ### Trên Windows
 
 1. Tạo thư mục chứa tệp kê khai, ví dụ `D:\CongCu\DaAssist\`, rồi chép

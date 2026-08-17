@@ -54,7 +54,13 @@
 
   <Permissions>ReadWriteDocument</Permissions>
 
-  <VersionOverrides xmlns="http://schemas.microsoft.com/office/mailappversionoverrides" xsi:type="VersionOverridesV1_0">
+  <!--
+    Không gian tên phải là taskpaneappversionoverrides. Add-in bảng tính dùng lẫn
+    không gian tên mailappversionoverrides của add-in thư điện tử thì Host kiểu
+    Workbook không hợp lệ, Excel loại cả tệp và chỉ báo "manifest không hợp lệ"
+    mà không nói sai ở đâu.
+  -->
+  <VersionOverrides xmlns="http://schemas.microsoft.com/office/taskpaneappversionoverrides" xsi:type="VersionOverridesV1_0">
     <Hosts>
       <Host xsi:type="Workbook">
         <DesktopFormFactor>
