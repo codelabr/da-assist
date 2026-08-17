@@ -1,0 +1,17 @@
+# Không bao giờ commit dữ liệu, kể cả dữ liệu mô phỏng.
+*.xlsx
+*.xls
+*.xlsm
+*.csv
+du-lieu/
+tep-thu/
+
+# Kết quả dựng
+node_modules/
+docs/dist/
+*.log
+
+# Hệ điều hành
+Thumbs.db
+.DS_Store
+desktop.ini

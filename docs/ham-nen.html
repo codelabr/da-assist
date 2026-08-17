@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<title>DA Assist — trang nền</title>
+<script src="https://appsforoffice.microsoft.com/lib/1/hosted/office.js"></script>
+</head>
+<body>
+<!--
+  Trang nền của add-in. Office nạp trang này để đăng ký các lệnh chạy ngầm — tức
+  những nút bấm xong là chạy luôn, không mở bảng điều khiển.
+
+  Bản này chưa có lệnh chạy ngầm nào; mọi việc đều đi qua bảng điều khiển vì
+  chúng đều cần người dùng xem trước và quyết định. Trang vẫn phải tồn tại vì
+  bản kê khai có khai FunctionFile, và Office báo lỗi nếu địa chỉ ấy không mở được.
+-->
+<script>
+  if (typeof Office !== "undefined") {
+    Office.onReady(function () {
+      // Chỗ đăng ký lệnh chạy ngầm về sau:
+      // Office.actions.associate("tenLenh", ham);
+    });
+  }
+</script>
+</body>
+</html>

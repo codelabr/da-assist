@@ -1,0 +1,121 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Bản kê khai của add-in Excel.
+
+  Mọi địa chỉ trỏ vào trang GitHub Pages của kho codelabr/da-assist. Nếu bạn tạo
+  bản dùng riêng ở kho khác thì thay tài khoản và tên kho ở tất cả các dòng dưới.
+
+  Bốn điều dễ vấp:
+    - Đoạn /docs/ trong địa chỉ là BẮT BUỘC, không phải dư. GitHub Pages của kho
+      này trỏ vào GỐC NHÁNH chứ không trỏ vào docs/, vì hai vỏ nạp lõi bằng
+      ../src/index.js — trỏ Pages vào docs/ thì src/ nằm ngoài phạm vi trang và
+      công cụ không nạp được lõi.
+    - Địa chỉ phải là https. Office KHÔNG nhận địa chỉ file:// hay http://
+      (trừ http://localhost khi đang phát triển).
+    - Id là một định danh duy nhất. GIỮ NGUYÊN qua mọi lần cập nhật; đổi nó thì
+      Excel coi đây là một add-in khác và người dùng phải cài lại từ đầu.
+    - Mọi tên miền mà add-in gọi tới phải khai trong AppDomains. Add-in này không
+      gọi đi đâu cả, nên chỉ có đúng tên miền của chính nó.
+-->
+<OfficeApp
+  xmlns="http://schemas.microsoft.com/office/appforoffice/1.1"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xmlns:bt="http://schemas.microsoft.com/office/officeappbasictypes/1.0"
+  xmlns:ov="http://schemas.microsoft.com/office/taskpaneappversionoverrides"
+  xsi:type="TaskPaneApp">
+
+  <Id>7c1f4a92-3b6d-4e58-9a02-5d8f1c6b7e34</Id>
+  <Version>0.1.0.0</Version>
+  <ProviderName>Trung tâm Kiểm soát bệnh tật</ProviderName>
+  <DefaultLocale>vi-VN</DefaultLocale>
+  <DisplayName DefaultValue="DA Assist — rà soát tệp Excel"/>
+  <Description DefaultValue="Rà soát, làm sạch và phân tích tệp Excel của công tác phòng, chống HIV/AIDS. Chạy hoàn toàn trong máy, không gửi dữ liệu đi đâu."/>
+  <IconUrl DefaultValue="https://codelabr.github.io/da-assist/docs/bieu-tuong-32.png"/>
+  <HighResolutionIconUrl DefaultValue="https://codelabr.github.io/da-assist/docs/bieu-tuong-80.png"/>
+  <SupportUrl DefaultValue="https://github.com/codelabr/da-assist"/>
+
+  <AppDomains>
+    <AppDomain>https://codelabr.github.io</AppDomain>
+  </AppDomains>
+
+  <Hosts>
+    <Host Name="Workbook"/>
+  </Hosts>
+
+  <Requirements>
+    <Sets DefaultMinVersion="1.1">
+      <Set Name="ExcelApi" MinVersion="1.1"/>
+    </Sets>
+  </Requirements>
+
+  <DefaultSettings>
+    <SourceLocation DefaultValue="https://codelabr.github.io/da-assist/docs/khung-addin.html"/>
+  </DefaultSettings>
+
+  <Permissions>ReadWriteDocument</Permissions>
+
+  <VersionOverrides xmlns="http://schemas.microsoft.com/office/mailappversionoverrides" xsi:type="VersionOverridesV1_0">
+    <Hosts>
+      <Host xsi:type="Workbook">
+        <DesktopFormFactor>
+          <GetStarted>
+            <Title resid="TieuDe"/>
+            <Description resid="MoTa"/>
+            <LearnMoreUrl resid="TrangHuongDan"/>
+          </GetStarted>
+          <FunctionFile resid="TrangHam"/>
+          <ExtensionPoint xsi:type="PrimaryCommandSurface">
+            <OfficeTab id="TabHome">
+              <Group id="NhomDaAssist">
+                <Label resid="NhanNhom"/>
+                <Icon>
+                  <bt:Image size="16" resid="Bieu16"/>
+                  <bt:Image size="32" resid="Bieu32"/>
+                  <bt:Image size="80" resid="Bieu80"/>
+                </Icon>
+                <Control xsi:type="Button" id="NutMoBangDieuKhien">
+                  <Label resid="NhanNut"/>
+                  <Supertip>
+                    <Title resid="NhanNut"/>
+                    <Description resid="MoTaNut"/>
+                  </Supertip>
+                  <Icon>
+                    <bt:Image size="16" resid="Bieu16"/>
+                    <bt:Image size="32" resid="Bieu32"/>
+                    <bt:Image size="80" resid="Bieu80"/>
+                  </Icon>
+                  <Action xsi:type="ShowTaskpane">
+                    <TaskpaneId>BangDieuKhienDaAssist</TaskpaneId>
+                    <SourceLocation resid="TrangChinh"/>
+                  </Action>
+                </Control>
+              </Group>
+            </OfficeTab>
+          </ExtensionPoint>
+        </DesktopFormFactor>
+      </Host>
+    </Hosts>
+
+    <Resources>
+      <bt:Images>
+        <bt:Image id="Bieu16" DefaultValue="https://codelabr.github.io/da-assist/docs/bieu-tuong-16.png"/>
+        <bt:Image id="Bieu32" DefaultValue="https://codelabr.github.io/da-assist/docs/bieu-tuong-32.png"/>
+        <bt:Image id="Bieu80" DefaultValue="https://codelabr.github.io/da-assist/docs/bieu-tuong-80.png"/>
+      </bt:Images>
+      <bt:Urls>
+        <bt:Url id="TrangChinh" DefaultValue="https://codelabr.github.io/da-assist/docs/khung-addin.html"/>
+        <bt:Url id="TrangHam" DefaultValue="https://codelabr.github.io/da-assist/docs/ham-nen.html"/>
+        <bt:Url id="TrangHuongDan" DefaultValue="https://github.com/codelabr/da-assist"/>
+      </bt:Urls>
+      <bt:ShortStrings>
+        <bt:String id="TieuDe" DefaultValue="DA Assist đã sẵn sàng"/>
+        <bt:String id="NhanNhom" DefaultValue="DA Assist"/>
+        <bt:String id="NhanNut" DefaultValue="Rà soát bảng tính"/>
+      </bt:ShortStrings>
+      <bt:LongStrings>
+        <bt:String id="MoTa" DefaultValue="Mở thẻ Trang đầu rồi bấm Rà soát bảng tính để bắt đầu."/>
+        <bt:String id="MoTaNut" DefaultValue="Rà soát trang tính đang mở, đề xuất cách làm sạch và dựng biểu mẫu báo cáo. Dữ liệu không rời khỏi máy."/>
+      </bt:LongStrings>
+    </Resources>
+  </VersionOverrides>
+</OfficeApp>
