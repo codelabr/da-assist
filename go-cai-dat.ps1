@@ -1,7 +1,7 @@
 # DA Assist - kich ban go add-in khoi Excel tren Windows.
 #
 # Chay bang:
-#   iex (New-Object Net.WebClient).DownloadString('https://codelabr.github.io/da-assist/go-cai-dat.ps1')
+#   irm https://codelabr.github.io/da-assist/go-cai-dat.ps1 | iex
 #
 # Kich ban nay xoa dung nhung gi kich ban cai da tao ra: mot muc trong so dang ky
 # cua tai khoan hien tai, va mot thu muc chua ban ke khai. KHONG dong den tep du
@@ -64,5 +64,5 @@ Ghi '  Van dung duoc cong cu ma khong can cai gi:' 'Cyan'
 Ghi '  https://codelabr.github.io/da-assist/docs/' 'Cyan'
 Ghi ''
 Ghi '  Cai lai bat cu luc nao:' 'Cyan'
-Ghi "    iex (New-Object Net.WebClient).DownloadString('https://codelabr.github.io/da-assist/cai-dat.ps1')" 'White'
+Ghi '    irm https://codelabr.github.io/da-assist/cai-dat.ps1 | iex' 'White'
 Ghi ''

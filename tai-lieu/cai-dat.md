@@ -74,7 +74,7 @@ Cách này **không cần quyền quản trị** và không phải chia sẻ th�
 Mở **Windows PowerShell** (bấm phím Windows, gõ `powershell`, Enter) rồi dán dòng sau:
 
 ```powershell
-iex (New-Object Net.WebClient).DownloadString('https://codelabr.github.io/da-assist/cai-dat.ps1')
+irm https://codelabr.github.io/da-assist/cai-dat.ps1 | iex
 ```
 
 Kịch bản in ra từng bước nó làm. Xong thì **đóng hẳn Excel rồi mở lại**; add-in hiện
@@ -83,7 +83,7 @@ Kịch bản in ra từng bước nó làm. Xong thì **đóng hẳn Excel rồi
 Gỡ ra cũng một dòng:
 
 ```powershell
-iex (New-Object Net.WebClient).DownloadString('https://codelabr.github.io/da-assist/go-cai-dat.ps1')
+irm https://codelabr.github.io/da-assist/go-cai-dat.ps1 | iex
 ```
 
 **Nên đọc kịch bản trước khi chạy.** Dán một địa chỉ lạ vào PowerShell rồi chạy ngay

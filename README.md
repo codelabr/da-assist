@@ -15,13 +15,13 @@ thể ngắt mạng sau khi trang đã mở để tự kiểm chứng.
 quyền quản trị:
 
 ```powershell
-iex (New-Object Net.WebClient).DownloadString('https://codelabr.github.io/da-assist/cai-dat.ps1')
+irm https://codelabr.github.io/da-assist/cai-dat.ps1 | iex
 ```
 
 Gỡ ra:
 
 ```powershell
-iex (New-Object Net.WebClient).DownloadString('https://codelabr.github.io/da-assist/go-cai-dat.ps1')
+irm https://codelabr.github.io/da-assist/go-cai-dat.ps1 | iex
 ```
 
 Nên đọc [`cai-dat.ps1`](cai-dat.ps1) trước khi chạy — dán một địa chỉ lạ vào PowerShell
