@@ -16,6 +16,7 @@ import {
   sinhBieuTuVanXetNghiem,
   sinhDanhSach,
   sinhDanhSachNhanSu,
+  sinhDanhSachY,
 } from "./mau.js";
 
 import { boDau, chuanHoa, khopKhoa } from "../src/bang/../tien-ich/chuoi.js";
@@ -25,12 +26,13 @@ import { suyKieuBang, KIEU } from "../src/bang/suy-kieu.js";
 import { MUC } from "../src/kiem/kiem-chung.js";
 import { docSoBieu, nhomPhanTo } from "../src/kiem/kiem-bieu.js";
 import { nhanDang } from "../src/ho-so/nhan-dang.js";
+import { nhanKhaiNiem } from "../src/tu-dien/khai-niem.js";
 import { kiemBieuTT05, nhanDangBieu } from "../src/ho-so/tt05-bieu-bao-cao.js";
 import HO_SO from "../src/ho-so/hivinfo-giam-sat-ca-benh.js";
 import { dungPhuLuc4 } from "../src/bieu-mau/phu-luc-4-tt07.js";
 import {
   HINH_DANG,
-  raSoat,
+  raSoat as raSoatLoi,
   sinhCauHoi,
   VIEC,
   hoSoMoi,
@@ -91,6 +93,17 @@ const mot = (ds, ma) => {
 };
 
 /* ══════════════════════════════════════════════════════════ */
+/**
+ * Mốc "hôm nay" cố định cho cả bộ thử.
+ *
+ * Quy tắc Y1.9 so ngày với hôm nay, nên nếu để lõi đọc đồng hồ máy thì bộ thử sẽ
+ * TỰ ĐỔI KẾT QUẢ theo ngày chạy: bộ sinh tạo ngày đến hết năm 2026, nên hôm nay
+ * còn trong năm 2026 thì một tệp "sạch" lại có ngày ở tương lai. Mốc cố định 31/12/2026
+ * đặt sau mọi ngày mà bộ sinh tạo ra.
+ */
+const MOC_HOM_NAY = new Date(Date.UTC(2026, 11, 31));
+const raSoat = (v, tc = {}) => raSoatLoi(v, { homNay: MOC_HOM_NAY, ...tc });
+
 nhomCa("Chuỗi tiếng Việt");
 
 ca("bỏ dấu giữ được chữ đ hoa và thường", () => {
@@ -1652,6 +1665,226 @@ ca("bảng không phải biểu Thông tư 05 thì nói rõ đang ở tầng chu
     "phải nói rõ đang ở tầng chung chứ không im lặng"
   );
   bang(coMa(kq, "T503").length, 0, "không nhận ra biểu thì không được viện dẫn Điều 3");
+});
+
+/* ══════════════════════════════════════════════════════════ */
+nhomCa("Từ điển khái niệm cột");
+
+const knCua = (v) => raSoat(v).khaiNiem;
+
+ca("nhận đúng các cột ngày, trạng thái và định danh", () => {
+  const kn = knCua(sinhDanhSachY());
+  for (const ma of ["NGAY_KHANG_DINH", "NGAY_ARV_DAU", "NGAY_TU_VONG", "NGAY_BAO_TU_VONG",
+    "NGAY_KET_THUC", "NGAY_KHAM_CUOI", "TRANG_THAI_DIEU_TRI", "TRANG_THAI_NGUOI",
+    "LY_DO_KET_THUC", "KET_QUA_KHANG_DINH", "MA_BENH_NHAN", "SO_CCCD", "SO_DIEN_THOAI",
+    "GIOI_TINH", "NAM_SINH"]) {
+    dung(kn.theoMa.has(ma), `chưa nhận ra khái niệm ${ma}`);
+  }
+});
+
+ca("KHÔNG nhận cột của bệnh khác thành cột HIV — ca âm", () => {
+  // Cột lao và viêm gan dùng lại đúng cụm từ của điều trị HIV. Trên tệp thật,
+  // "Ngày bắt đầu điều trị Lao tiềm ẩn" chỉ thoát nhờ tình cờ rỗng.
+  const b = taoBang({
+    ten: "Lao",
+    hang: [
+      ["Mã bệnh nhân", "Ngày bắt đầu điều trị Lao tiềm ẩn", "Ngày kết thúc điều trị Lao",
+        "Ngày chẩn đoán Lao", "Ngày XN tải lượng HCV"],
+      ["BN1", "01/02/2024", "01/08/2024", "15/01/2024", "20/03/2024"],
+      ["BN2", "03/03/2024", "03/09/2024", "17/02/2024", "22/04/2024"],
+      ["BN3", "05/04/2024", "05/10/2024", "19/03/2024", "24/05/2024"],
+    ],
+  });
+  suyKieuBang(b);
+  const kn = nhanKhaiNiem(b);
+  sai(kn.theoMa.has("NGAY_ARV_DAU"), "cột lao tiềm ẩn không được nhận thành ngày ARV");
+  sai(kn.theoMa.has("NGAY_KET_THUC"), "cột kết thúc điều trị lao không được nhận thành kết thúc ARV");
+  sai(kn.theoMa.has("NGAY_KHANG_DINH"), "cột chẩn đoán lao không được nhận thành chẩn đoán HIV");
+  sai(kn.theoMa.has("NGAY_XN_TAI_LUONG"), "cột tải lượng HCV không được nhận thành tải lượng HIV");
+});
+
+ca("căn cước và chứng minh nhân dân là hai khái niệm khác nhau", () => {
+  const b = taoBang({
+    ten: "Giay to",
+    hang: [["Số CMND", "Số CCCD"], ["123456789", "001234567890"], ["987654321", "009876543210"]],
+  });
+  suyKieuBang(b);
+  const kn = nhanKhaiNiem(b);
+  bang(kn.theoMa.get("SO_CMND"), 0);
+  bang(kn.theoMa.get("SO_CCCD"), 1);
+});
+
+ca("cột tên có chữ ngày mà toàn số nhỏ thì không nhận là cột ngày — ca âm", () => {
+  const b = taoBang({
+    ten: "So ngay",
+    hang: [["Mã bệnh nhân", "Số ngày điều trị"], ["BN1", 30], ["BN2", 45], ["BN3", 12]],
+  });
+  suyKieuBang(b);
+  const kn = nhanKhaiNiem(b);
+  bang([...kn.theoMa.keys()].filter((k) => k.startsWith("NGAY_")), []);
+});
+
+nhomCa("Y1 — trình tự thời gian");
+
+const maCua = (v, tc) => raSoat(v, tc).phatHien.map((p) => p.ma);
+const timMa = (v, ma, tc) => raSoat(v, tc).phatHien.filter((p) => p.ma === ma);
+
+ca("danh sách điền đúng KHÔNG sinh phát hiện chuyên ngành nào — ca âm", () => {
+  // Chỉ soi các mã nhóm Y. Bộ sinh ghi ngày dưới dạng chuỗi nên KC04 vẫn nêu, và
+  // đó là phát hiện đúng: ngày lưu dạng văn bản thì Excel không sắp xếp được.
+  const kq = raSoat(sinhDanhSachY());
+  bang(kq.phatHien.filter((p) => /^Y/.test(p.ma)).map((p) => p.ma), []);
+});
+
+ca("Y1.1 bắt ngày kết thúc trước ngày bắt đầu", () => {
+  const p = timMa(sinhDanhSachY({ ketThucTruocBatDau: 3 }), "Y1.1");
+  bang(p.length, 1);
+  bang(p[0].mucDo, MUC.CHAC_CHAN);
+  bang(p[0].soDong, 3);
+});
+
+ca("Y1.2 bắt ngày tử vong trước ngày chẩn đoán, ở mức chắc chắn", () => {
+  const p = timMa(sinhDanhSachY({ tuVongTruocKhangDinh: 2 }), "Y1.2");
+  bang(p.length, 1);
+  bang(p[0].mucDo, MUC.CHAC_CHAN);
+});
+
+ca("Y1.4 bắt ngày báo tử vong trước ngày tử vong", () => {
+  const p = timMa(sinhDanhSachY({ baoTruocTuVong: 2 }), "Y1.4");
+  bang(p.length, 1);
+  bang(p[0].soDong, 2);
+});
+
+ca("Y1.5a bắt ngày khám sau ngày tử vong", () => {
+  const p = timMa(sinhDanhSachY({ khamSauTuVong: 4 }), "Y1.5a");
+  bang(p.length, 1);
+  bang(p[0].mucDo, MUC.CHAC_CHAN);
+  bang(p[0].soDong, 4);
+});
+
+ca("Y1.9 bắt ngày trong tương lai, và mốc hôm nay nhận từ ngoài", () => {
+  const v = sinhDanhSachY({ ngayTuongLai: 2 });
+  bang(timMa(v, "Y1.9").length, 1);
+  // Đặt mốc hôm nay sau năm 2030 thì không còn ngày nào ở tương lai.
+  bang(timMa(v, "Y1.9", { homNay: new Date(Date.UTC(2031, 0, 1)) }).length, 0);
+});
+
+ca("Y1.9 KHÔNG áp cho cột ngày ở tương lai theo bản chất — ca âm", () => {
+  // Ngày hết hạn thẻ bảo hiểm đúng ra phải ở tương lai. Bản đầu áp cho mọi cột
+  // ngày và gắn cờ chắc chắn cho 1.196 dòng trên tệp thật.
+  const v = {
+    ten: "BHYT",
+    hang: [
+      ["Mã bệnh nhân", "Ngày hết hạn BHYT", "Ngày hẹn khám lại"],
+      ["BN1", "01/02/2030", "15/03/2030"],
+      ["BN2", "01/03/2030", "16/04/2030"],
+      ["BN3", "01/04/2030", "17/05/2030"],
+    ],
+  };
+  bang(timMa(v, "Y1.9").length, 0, "không được gắn cờ ngày hết hạn hay ngày hẹn");
+});
+
+ca("Y1.10 chỉ ở mức cần xác minh, vì điều trị dự phòng có trước khẳng định", () => {
+  const p = timMa(sinhDanhSachY({ arvTruocKhangDinh: 3 }), "Y1.10");
+  bang(p.length, 1);
+  bang(p[0].mucDo, MUC.CAN_XAC_MINH);
+  dung(p[0].moTa.includes("dự phòng"), "phải nói rõ ngoại lệ điều trị dự phòng");
+});
+
+nhomCa("Y2 — trạng thái mâu thuẫn");
+
+ca("Y2.1 bắt trạng thái đang điều trị mà có ngày tử vong", () => {
+  const p = timMa(sinhDanhSachY({ dangDieuTriMaCoNgayTuVong: 2 }), "Y2.1");
+  bang(p.length, 1);
+  bang(p[0].mucDo, MUC.CHAC_CHAN);
+  bang(p[0].soDong, 2);
+});
+
+ca("Y2.2 bắt trạng thái tử vong mà thiếu ngày tử vong", () => {
+  const p = timMa(sinhDanhSachY({ tuVongMaThieuNgay: 3 }), "Y2.2");
+  bang(p.length, 1);
+  bang(p[0].mucDo, MUC.CAN_XAC_MINH);
+});
+
+ca("Y2.3 chỉ ở mức cần xác minh, và nói rõ hai ngoại lệ", () => {
+  const p = timMa(sinhDanhSachY({ amTinhMaCoArv: 2 }), "Y2.3");
+  bang(p.length, 1);
+  bang(p[0].mucDo, MUC.CAN_XAC_MINH);
+  dung(p[0].moTa.includes("trẻ nhỏ"), "phải nêu ngoại lệ trẻ chưa khẳng định được");
+  dung(p[0].moTa.includes("dự phòng"), "phải nêu ngoại lệ dùng thuốc để dự phòng");
+});
+
+ca("Y2.5 bắt có lý do kết thúc mà thiếu ngày kết thúc", () => {
+  const p = timMa(sinhDanhSachY({ coLyDoThieuNgayKetThuc: 4 }), "Y2.5");
+  bang(p.length, 1);
+  bang(p[0].soDong, 4);
+});
+
+ca("Y2.8 bắt hai cột trạng thái nói ngược nhau", () => {
+  const p = timMa(sinhDanhSachY({ haiTrangThaiNguoc: 2 }), "Y2.8");
+  bang(p.length, 1);
+  bang(p[0].mucDo, MUC.CHAC_CHAN);
+});
+
+ca("Y2.10 nêu khi các cột cùng nói về tử vong cho số khác nhau", () => {
+  const p = timMa(sinhDanhSachY({ haiTrangThaiNguoc: 2, tuVongMaThieuNgay: 3 }), "Y2.10");
+  dung(p.length === 1, "phải nêu đúng một lần");
+  dung(p[0].moTa.includes("="), "phải in ra từng con số để người dùng tự thấy");
+});
+
+ca("Y2.10 im lặng khi các cột khớp nhau — ca âm", () => {
+  bang(timMa(sinhDanhSachY({ baoTruocTuVong: 3 }), "Y2.10").length, 0);
+});
+
+nhomCa("Y10 — định danh");
+
+ca("Y10.1 bắt cùng mã bệnh nhân mà khác giới tính, mức chắc chắn", () => {
+  const p = timMa(sinhDanhSachY({ maTrungKhacGioi: 2 }), "Y10.1");
+  bang(p.length, 1);
+  bang(p[0].mucDo, MUC.CHAC_CHAN);
+  dung(p[0].moTa.includes("máy không biết dòng nào đúng"), "phải nói rõ máy không tự quyết");
+});
+
+ca("Y10.1 im lặng khi mã trùng mà thông tin khớp nhau — ca âm", () => {
+  // Hai dòng cùng mã, cùng giới tính, cùng năm sinh: có thể là trùng bản ghi,
+  // nhưng KHÔNG phải xung đột nhân khẩu, nên Y10.1 không được nêu.
+  const v = sinhDanhSachY({ soDong: 6 });
+  v.hang[6][1] = v.hang[1][1];
+  v.hang[6][4] = v.hang[1][4];
+  v.hang[6][3] = v.hang[1][3];
+  bang(timMa(v, "Y10.1").length, 0);
+});
+
+ca("Y10.2 bắt cùng số căn cước mà khác mã bệnh nhân", () => {
+  const p = timMa(sinhDanhSachY({ cccdTrungKhacMa: 2 }), "Y10.2");
+  bang(p.length, 1);
+  bang(p[0].mucDo, MUC.CAN_XAC_MINH);
+});
+
+ca("Y10.3 bắt mã lệch khuôn dạng chung của cột", () => {
+  const p = timMa(sinhDanhSachY({ soDong: 40, maLechKhuon: 3 }), "Y10.3");
+  bang(p.length, 1);
+  dung(p[0].moTa.includes("khuôn dạng chung"), "phải nêu khuôn dạng phổ biến");
+});
+
+ca("Y10.3 im lặng khi cột vốn nhiều khuôn dạng — ca âm", () => {
+  // Không có khuôn dạng nào áp đảo thì im lặng, thay vì nêu quá nửa số dòng.
+  const v = sinhDanhSachY({ soDong: 40 });
+  for (let i = 0; i < 20; i++) v.hang[i + 1][1] = `HS-${i}`;
+  bang(timMa(v, "Y10.3").length, 0);
+});
+
+ca("Y10.5 nhận ra số điện thoại bị Excel ăn mất số 0 ở đầu", () => {
+  const p = timMa(sinhDanhSachY({ dtThieuSoKhong: 3 }), "Y10.5");
+  bang(p.length, 1);
+  dung(p[0].moTa.includes("làm mất số 0 ở đầu"), "phải nêu đúng nguyên nhân, không chỉ nói sai độ dài");
+  dung(p[0].deXuat.includes("dạng văn bản"), "phải hướng dẫn sửa cả cột, không sửa từng ô");
+});
+
+ca("Y10.6 bắt mã đơn vị ứng với nhiều tên khác nhau", () => {
+  const p = timMa(sinhDanhSachY({ maDvLechTen: 2 }), "Y10.6");
+  bang(p.length, 1);
+  bang(p[0].mucDo, MUC.CAN_XAC_MINH);
 });
 
 /* ══════════════════════════════════════════════════════════ */

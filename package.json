@@ -11,6 +11,7 @@
   "homepage": "https://codelabr.github.io/da-assist/docs/",
   "scripts": {
     "thu": "node bo-thu/chay.js",
+    "thu-nhieu": "node bo-thu/chay-nhieu.js",
     "thu-tep-that": "node bo-thu/thu-tep-that.js",
     "xem": "python -m http.server 8731"
   },

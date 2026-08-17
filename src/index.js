@@ -10,6 +10,10 @@ import { taoBang, HINH_DANG } from "./bang/tao-bang.js";
 import { suyKieuBang } from "./bang/suy-kieu.js";
 import { kiemChung, MUC } from "./kiem/kiem-chung.js";
 import { kiemBieu } from "./kiem/kiem-bieu.js";
+import { kiemThoiGian } from "./kiem/y-thoi-gian.js";
+import { kiemTrangThai } from "./kiem/y-trang-thai.js";
+import { kiemDinhDanh } from "./kiem/y-dinh-danh.js";
+import { nhanKhaiNiem, KHAI_NIEM, tenKhaiNiem } from "./tu-dien/khai-niem.js";
 import { nhanDang } from "./ho-so/nhan-dang.js";
 import HO_SO_HIVINFO, { kiemTapGiaTri, kiemCheo } from "./ho-so/hivinfo-giam-sat-ca-benh.js";
 import { DS_BIEU_TT05, nhanDangBieu, kiemBieuTT05 } from "./ho-so/tt05-bieu-bao-cao.js";
@@ -51,6 +55,10 @@ export const DS_HO_SO = [HO_SO_HIVINFO];
 export { DS_BIEU_TT05, nhanDangBieu, kiemBieuTT05 };
 export { kiemBieu };
 
+/** Từ điển khái niệm cột và ba nhóm quy tắc chuyên ngành. */
+export { KHAI_NIEM, nhanKhaiNiem, tenKhaiNiem };
+export { kiemThoiGian, kiemTrangThai, kiemDinhDanh };
+
 const KIEM_THEO_HO_SO = {
   "hivinfo-giam-sat-ca-benh": [kiemTapGiaTri, kiemCheo],
 };
@@ -59,7 +67,7 @@ const KIEM_THEO_HO_SO = {
  * Rà soát một vùng ô thô.
  * vungTho = { ten, hang: [[...]], oGop?: [...] }
  */
-export function raSoat(vungTho) {
+export function raSoat(vungTho, tuyChon = {}) {
   const bang = taoBang(vungTho);
   suyKieuBang(bang);
 
@@ -67,6 +75,10 @@ export function raSoat(vungTho) {
   const phatHien = [];
   const canhBaoLuong = [];
   let ndBieu = null;
+  // Mốc hôm nay nhận từ ngoài để bộ thử tái lập được kết quả; ngoài bộ thử thì
+  // lấy đồng hồ máy. Quy tắc "ngày trong tương lai" cần mốc này.
+  const homNay = tuyChon.homNay !== undefined ? tuyChon.homNay : new Date();
+  const kn = nhanKhaiNiem(bang);
 
   if (bang.hinhDang === HINH_DANG.BIEU_TONG_HOP) {
     canhBaoLuong.push(
@@ -94,6 +106,15 @@ export function raSoat(vungTho) {
     }
   } else {
     phatHien.push(...kiemChung(bang));
+
+    // Ba nhóm quy tắc chuyên ngành. Chúng nhận cột theo TỪNG CỘT MỘT qua từ điển
+    // khái niệm, nên không cần nhận ra cả tệp là loại gì: nhận được cột nào thì
+    // chạy quy tắc của cột ấy, không nhận được thì im lặng bỏ qua.
+    const tcY = { kn, thuTuNgay: tuyChon.thuTuNgay, homNay };
+    phatHien.push(...kiemThoiGian(bang, tcY));
+    phatHien.push(...kiemTrangThai(bang, tcY));
+    phatHien.push(...kiemDinhDanh(bang, tcY));
+
     if (bang.hinhDang === HINH_DANG.CHUA_XAC_DINH) {
       canhBaoLuong.push(
         "Chưa xác định chắc chắn đây là danh sách hay biểu đã cộng. Công cụ chạy các " +
@@ -115,6 +136,7 @@ export function raSoat(vungTho) {
     bang,
     nhanDang: nd,
     nhanDangBieu: ndBieu,
+    khaiNiem: kn,
     phatHien,
     canhBaoLuong,
     tomTat: {

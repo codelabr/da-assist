@@ -189,6 +189,172 @@ export function sinhBangKhongLienQuan() {
 }
 
 /**
+ * Danh sách nhỏ cho các quy tắc chuyên ngành Y1, Y2, Y10.
+ *
+ * Cột đặt tên đúng như bản xuất thật để đo luôn cả bộ nhận khái niệm. Bản mặc định
+ * điền ĐÚNG, dùng làm ca âm; mỗi tuỳ chọn bơm đúng một loại lỗi để từng ca thử biết
+ * trước đáp án của mình.
+ */
+export function sinhDanhSachY(tuyChon = {}) {
+  const {
+    soDong = 30,
+    dangNgay = "chuoi", // "chuoi" dd/mm/yyyy · "iso" yyyy-mm-dd · "o-ngay" ô ngày thật
+    cachViet = 0, // chọn biến thể cách viết trạng thái, 0..3
+    ketThucTruocBatDau = 0, // Y1.1
+    tuVongTruocKhangDinh = 0, // Y1.2
+    baoTruocTuVong = 0, // Y1.4
+    khamSauTuVong = 0, // Y1.5a
+    ngayTuongLai = 0, // Y1.9
+    arvTruocKhangDinh = 0, // Y1.10
+    dangDieuTriMaCoNgayTuVong = 0, // Y2.1
+    tuVongMaThieuNgay = 0, // Y2.2
+    amTinhMaCoArv = 0, // Y2.3
+    coLyDoThieuNgayKetThuc = 0, // Y2.5
+    haiTrangThaiNguoc = 0, // Y2.8
+    maTrungKhacGioi = 0, // Y10.1
+    cccdTrungKhacMa = 0, // Y10.2
+    maLechKhuon = 0, // Y10.3
+    dtThieuSoKhong = 0, // Y10.5
+    maDvLechTen = 0, // Y10.6
+  } = tuyChon;
+
+  const hai = (n) => String(n).padStart(2, "0");
+  const d = (y, m, ng) => {
+    if (dangNgay === "o-ngay") return new Date(Date.UTC(y, m - 1, ng));
+    if (dangNgay === "iso") return `${y}-${hai(m)}-${hai(ng)}`;
+    return `${hai(ng)}/${hai(m)}/${y}`;
+  };
+
+  // Bốn cách viết cùng một trạng thái. Bộ nhận phải hiểu cả bốn, vì mỗi đơn vị
+  // ghi một kiểu và không đơn vị nào sai.
+  const VIET = [
+    { song: "Còn sống", tuVong: "Tử vong", dangDT: "Đang điều trị", ketThuc: "Đã kết thúc" },
+    { song: "con song", tuVong: "tu vong", dangDT: "dang dieu tri", ketThuc: "da ket thuc" },
+    { song: "CÒN SỐNG", tuVong: "TỬ VONG", dangDT: "ĐANG ĐIỀU TRỊ", ketThuc: "ĐÃ KẾT THÚC" },
+    { song: "Còn sống", tuVong: "Đã tử vong", dangDT: "Còn điều trị", ketThuc: "Ra khỏi chương trình" },
+  ];
+  const V = VIET[cachViet % VIET.length];
+
+  const hang = [[
+    "TT", "Mã bệnh nhân", "Họ tên", "Năm sinh", "Giới tính",
+    "Số CCCD", "Số điện thoại",
+    "Mã Tỉnh/TP thường trú", "Tỉnh/TP thường trú",
+    "Ngày XN khẳng định đầu tiên", "Kết quả khẳng định",
+    "Ngày điều trị ARV lần đầu", "Ngày khám gần nhất",
+    "Ngày kết thúc", "Lý do kết thúc",
+    "Trạng thái điều trị hiện tại", "Trạng thái người nhiễm",
+    "Ngày tử vong", "Ngày báo tử vong",
+  ]];
+
+  for (let i = 0; i < soDong; i++) {
+    const nam = 2020 + (i % 4);
+    const kd = d(nam, (i % 12) + 1, (i % 27) + 1);
+    const arv = d(nam, (i % 12) + 1, (i % 27) + 2);
+    const kham = d(nam + 1, (i % 12) + 1, (i % 27) + 1);
+
+    const h = [
+      i + 1,
+      `BN${10000 + i}`,
+      `Người bệnh ${i + 1}`,
+      1980 + (i % 30),
+      i % 3 === 0 ? "Nữ" : "Nam",
+      String(100000000000 + i), // 12 chữ số
+      `09${String(10000000 + i).slice(0, 8)}`, // 10 chữ số
+      `0${hai((i % 9) + 1)}`,
+      `Tỉnh số ${(i % 9) + 1}`,
+      kd,
+      "Dương tính",
+      arv,
+      kham,
+      "", "",
+      V.dangDT,
+      V.song,
+      "", "",
+    ];
+    hang.push(h);
+  }
+
+  const C = {
+    ma: 1, gioi: 4, cccd: 5, dt: 6, maDv: 7, tenDv: 8,
+    kd: 9, ketQua: 10, arv: 11, kham: 12, ketThuc: 13, lyDo: 14,
+    ttDieuTri: 15, ttNguoi: 16, tuVong: 17, baoTuVong: 18,
+  };
+  const R = (i) => hang[i + 1];
+
+  // Năm nền của dòng i, để mọi ngày bơm vào tính TƯƠNG ĐỐI theo chính dòng ấy.
+  // Bản đầu tôi bơm ngày cố định (2015, 2024…) và bộ thử sinh theo tổ hợp phát
+  // hiện ngay: một tệp thử mang hai lỗi cùng lúc, nên không đo được quy tắc nào
+  // đứng riêng. Ví dụ ngày tử vong cố định 2021 lại đứng trước ngày khẳng định
+  // của những dòng năm 2022, thành ra bơm lỗi Y1.5a mà kéo theo cả Y1.2.
+  const namCua = (i) => 2020 + (i % 4);
+
+  // Người đã tử vong thì xoá ngày khám: giữ lại thì chính bộ sinh tạo thêm lỗi
+  // "khám sau khi tử vong", làm nhiễu mọi ca khác.
+  const datTuVong = (i, namTV, ngayBao) => {
+    R(i)[C.tuVong] = d(namTV, 5, 20);
+    R(i)[C.baoTuVong] = ngayBao || d(namTV, 5, 25);
+    R(i)[C.ttNguoi] = V.tuVong;
+    R(i)[C.ttDieuTri] = V.ketThuc;
+    R(i)[C.kham] = "";
+  };
+
+  for (let i = 0; i < ketThucTruocBatDau; i++) {
+    R(i)[C.ketThuc] = d(namCua(i) - 1, 1, 5);
+    R(i)[C.lyDo] = "Chuyển đi"; // nếu không thì kéo theo Y2.6, thiếu lý do kết thúc
+  }
+  for (let i = 0; i < tuVongTruocKhangDinh; i++) {
+    // Trước mọi ngày khẳng định mà bộ sinh tạo ra.
+    R(i)[C.tuVong] = d(2015, 3, 3);
+    R(i)[C.baoTuVong] = d(2015, 3, 8);
+    R(i)[C.ttNguoi] = V.tuVong;
+    R(i)[C.ttDieuTri] = V.ketThuc;
+    R(i)[C.kham] = "";
+  }
+  for (let i = 0; i < baoTruocTuVong; i++) {
+    datTuVong(i, namCua(i) + 2, d(namCua(i) + 2, 5, 11));
+  }
+  for (let i = 0; i < khamSauTuVong; i++) {
+    datTuVong(i, namCua(i) + 1);
+    R(i)[C.kham] = d(namCua(i) + 3, 5, 5); // sau ngày tử vong
+  }
+  for (let i = 0; i < ngayTuongLai; i++) R(i)[C.kd] = d(2030, 4, 4);
+  for (let i = 0; i < arvTruocKhangDinh; i++) R(i)[C.arv] = d(namCua(i) - 2, 2, 2);
+  for (let i = 0; i < dangDieuTriMaCoNgayTuVong; i++) {
+    // Có ngày tử vong mà trạng thái vẫn là đang điều trị.
+    R(i)[C.tuVong] = d(namCua(i) + 2, 5, 20);
+    R(i)[C.baoTuVong] = d(namCua(i) + 2, 5, 25);
+    R(i)[C.kham] = "";
+  }
+  for (let i = 0; i < tuVongMaThieuNgay; i++) {
+    R(i)[C.ttNguoi] = V.tuVong;
+    R(i)[C.ttDieuTri] = V.ketThuc;
+    R(i)[C.kham] = "";
+  }
+  for (let i = 0; i < amTinhMaCoArv; i++) R(i)[C.ketQua] = "Âm tính";
+  for (let i = 0; i < coLyDoThieuNgayKetThuc; i++) R(i)[C.lyDo] = "Chuyển đi";
+  for (let i = 0; i < haiTrangThaiNguoc; i++) {
+    R(i)[C.ttNguoi] = V.tuVong;
+    R(i)[C.ttDieuTri] = V.dangDT;
+    R(i)[C.tuVong] = d(namCua(i) + 2, 3, 3);
+    R(i)[C.baoTuVong] = d(namCua(i) + 2, 3, 8);
+    R(i)[C.kham] = "";
+  }
+  for (let i = 0; i < maTrungKhacGioi; i++) {
+    // Hai dòng cùng mã, khác giới tính.
+    R(soDong - 1 - i)[C.ma] = R(i)[C.ma];
+    R(soDong - 1 - i)[C.gioi] = R(i)[C.gioi] === "Nam" ? "Nữ" : "Nam";
+  }
+  for (let i = 0; i < cccdTrungKhacMa; i++) {
+    R(soDong - 1 - i)[C.cccd] = R(i)[C.cccd];
+  }
+  for (let i = 0; i < maLechKhuon; i++) R(i)[C.ma] = `BN${100 + i}`;
+  for (let i = 0; i < dtThieuSoKhong; i++) R(i)[C.dt] = 912345670 + i; // số, 9 chữ số
+  for (let i = 0; i < maDvLechTen; i++) R(i)[C.tenDv] = "Tỉnh ghi khác";
+
+  return { ten: "DS Y", hang };
+}
+
+/**
  * Biểu Tư vấn xét nghiệm HIV — Bảng 2 Phụ lục 1/2/4 Thông tư 05.
  *
  * Bản mặc định điền ĐÚNG, dùng làm ca âm. Các tuỳ chọn bơm vào từng loại lỗi một

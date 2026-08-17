@@ -258,43 +258,12 @@ function kiemThuTuNgay(bang, theoVaiTro, { ma, truoc, sau, moTa, deXuat }) {
 export function kiemCheo(bang, theoVaiTro) {
   const ds = [];
 
-  const thuTu = [
-    {
-      ma: "LC01",
-      truoc: "ngay_khang_dinh",
-      sau: "ngay_arv",
-      moTa: "Ngày điều trị ARV lần đầu nằm trước ngày xét nghiệm khẳng định",
-      deXuat: "Kiểm tra lại một trong hai ngày; người bệnh không thể bắt đầu ARV trước khi được khẳng định.",
-    },
-    {
-      ma: "LC02",
-      truoc: "ngay_khang_dinh",
-      sau: "ngay_chuyen_giam_sat",
-      moTa: "Ngày chuyển giám sát ca bệnh nằm trước ngày xét nghiệm khẳng định",
-      deXuat: "Kiểm tra lại thứ tự hai mốc.",
-    },
-    {
-      ma: "LC03",
-      truoc: "ngay_khang_dinh",
-      sau: "ngay_tu_vong",
-      moTa: "Ngày tử vong nằm trước ngày xét nghiệm khẳng định",
-      deXuat: "Kiểm tra lại; có thể là lỗi nhập năm.",
-    },
-    {
-      ma: "LC04",
-      truoc: "ngay_tu_vong",
-      sau: "ngay_bao_tu_vong",
-      moTa: "Ngày báo tử vong nằm trước ngày tử vong",
-      deXuat: "Kiểm tra lại thứ tự hai mốc.",
-    },
-    {
-      ma: "LC05",
-      truoc: "ngay_khang_dinh",
-      sau: "ngay_nhap_lieu",
-      moTa: "Ngày nhập liệu nằm trước ngày xét nghiệm khẳng định",
-      deXuat: "Kiểm tra lại; bản ghi không thể được nhập trước khi có kết quả khẳng định.",
-    },
-  ];
+  // Năm phép kiểm thứ tự ngày LC01–LC05 đã chuyển sang nhóm Y1 ở
+  // src/kiem/y-thoi-gian.js. Nhóm Y1 nhận cột theo TỪNG CỘT MỘT qua từ điển khái
+  // niệm, nên chạy được cả với tệp không phải bản xuất HIV-INFO — trong khi năm
+  // phép cũ chỉ chạy khi cả hồ sơ này được nhận ra. Để lại mảng rỗng thay vì xoá
+  // vòng lặp, để phần LC06–LC08 bên dưới không phải viết lại.
+  const thuTu = [];
 
   for (const t of thuTu) {
     const r = kiemThuTuNgay(bang, theoVaiTro, t);
