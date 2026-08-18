@@ -27,6 +27,10 @@ import { MUC } from "../src/kiem/kiem-chung.js";
 import { docSoBieu, nhomPhanTo } from "../src/kiem/kiem-bieu.js";
 import { nhanDang } from "../src/ho-so/nhan-dang.js";
 import { nhanKhaiNiem } from "../src/tu-dien/khai-niem.js";
+import { chuCot, gomVung } from "../src/tien-ich/vung.js";
+import {
+  dungBoTrang, nhomTuCap, oCoVanDe, trangNhomTrung, trangVanDe,
+} from "../src/xuat/bo-trang.js";
 import { kiemBieuTT05, nhanDangBieu } from "../src/ho-so/tt05-bieu-bao-cao.js";
 import HO_SO from "../src/ho-so/hivinfo-giam-sat-ca-benh.js";
 import { dungPhuLuc4 } from "../src/bieu-mau/phu-luc-4-tt07.js";
@@ -58,6 +62,7 @@ import { cotTuToaDo } from "../src/doc-tep/doc-xlsx.js";
 import { docXlsx } from "../src/doc-tep/doc-xlsx.js";
 import { toaDoCot } from "../src/ghi-tep/ghi-xlsx.js";
 import { taoExcelGia } from "./excel-gia.js";
+import { chonVung, toVung } from "../src/vo-addin/danh-dau.js";
 import { dinhDangLaNgay, docTrangHienTai } from "../src/vo-addin/doc-excel.js";
 import { ghiNhieuTrang, ghiTrangMoi, tenTrangHopLe } from "../src/vo-addin/ghi-excel.js";
 import { chuoiTuByte, moZip } from "../src/doc-tep/giai-nen.js";
@@ -1885,6 +1890,144 @@ ca("Y10.6 bắt mã đơn vị ứng với nhiều tên khác nhau", () => {
   const p = timMa(sinhDanhSachY({ maDvLechTen: 2 }), "Y10.6");
   bang(p.length, 1);
   bang(p[0].mucDo, MUC.CAN_XAC_MINH);
+});
+
+/* ══════════════════════════════════════════════════════════ */
+nhomCa("Gom ô thành vùng để tô");
+
+ca("gộp các dòng liên tiếp trong cùng cột thành một dải", () => {
+  const r = gomVung([
+    { hang: 1, cot: 2 }, { hang: 2, cot: 2 }, { hang: 3, cot: 2 },
+    { hang: 7, cot: 2 },
+  ]);
+  bang(r.vung, ["C2:C4", "C8"]);
+  bang(r.soVungBo, 0);
+});
+
+ca("đổi đúng chỉ số cột sang chữ cái, kể cả quá cột Z", () => {
+  bang(chuCot(0), "A");
+  bang(chuCot(25), "Z");
+  bang(chuCot(26), "AA");
+  bang(chuCot(89), "CL");
+});
+
+ca("vượt ngưỡng thì giữ vùng LỚN NHẤT và NÓI RÕ đã bỏ bao nhiêu", () => {
+  // Một dải dài 50 ô, cộng 5 ô lẻ ở các cột khác nhau.
+  const o = [];
+  for (let h = 0; h < 50; h++) o.push({ hang: h, cot: 0 });
+  for (let c = 1; c <= 5; c++) o.push({ hang: 100, cot: c });
+  const r = gomVung(o, { toiDa: 2 });
+  bang(r.vung.length, 2);
+  dung(r.vung.includes("A1:A50"), "phải giữ dải dài nhất");
+  bang(r.soVungBo, 4);
+  bang(r.soODaBo, 4);
+});
+
+nhomCa("Bộ trang xuất ra");
+
+ca("gom cặp dòng trùng thành nhóm, ba dòng cùng một người vào một nhóm", () => {
+  // Cặp [0,5] và [0,9]: cùng trỏ về dòng 0 nên phải thành MỘT nhóm ba dòng,
+  // không phải hai nhóm hai dòng.
+  const n = nhomTuCap([[0, 5], [0, 9], [2, 7]]);
+  bang(n.length, 2);
+  bang(n[0].dong, [0, 5, 9]);
+  bang(n[1].dong, [2, 7]);
+});
+
+ca("trang Danh sách vấn đề có địa chỉ ô trỏ vào trang nguồn", () => {
+  const kq = raSoat(sinhDanhSachY({ soDong: 20, ketThucTruocBatDau: 2 }));
+  const t = trangVanDe(kq.bang, kq.phatHien, "Trang goc");
+  bang(t.hang[0][0], "Mã quy tắc");
+  dung(t.hang.length > 2, "phải có ít nhất một dòng phát hiện");
+  dung(
+    t.hang.some((h) => String(h[7] || "").match(/^[A-Z]+\d+$/)),
+    "phải có ít nhất một địa chỉ ô kiểu A1"
+  );
+  dung(
+    t.hang.some((h) => String(h[0]).includes("Trang nguồn")),
+    "phải ghi rõ trang nguồn"
+  );
+});
+
+ca("ô có vấn đề KHÔNG lấy từ mục ghi nhận — ca âm", () => {
+  const kq = raSoat(sinhDanhSachY({ soDong: 20 }));
+  const ghiNhan = kq.phatHien.filter((p) => p.mucDo === MUC.GHI_NHAN);
+  dung(ghiNhan.length > 0, "bộ sinh phải có ít nhất một mục ghi nhận");
+  const o = oCoVanDe(kq.bang, ghiNhan);
+  bang(o.length, 0, "mục ghi nhận không phải lỗi nên không tô ô nào");
+});
+
+ca("bộ trang gồm đủ Đã làm sạch, Đối chiếu, Danh sách vấn đề, Nhóm trùng", () => {
+  const kq = raSoat(sinhDanhSachY({ soDong: 20, ketThucTruocBatDau: 2 }));
+  const ds = dungBoTrang({
+    bang: kq.bang,
+    phatHien: kq.phatHien,
+    ketQuaSua: { hang: [kq.bang.tieuDe, ...kq.bang.dong] },
+    dsNhomTrung: nhomTuCap([[0, 5]]),
+    tenTrangGoc: "Trang goc",
+  });
+  bang(ds.map((t) => t.ten), ["Da lam sach", "Doi chieu", "Danh sach van de", "Nhom trung"]);
+});
+
+ca("trang Nhóm trùng có cột số nhóm, để còn dùng được sau khi sắp xếp", () => {
+  const kq = raSoat(sinhDanhSachY({ soDong: 20 }));
+  const t = trangNhomTrung(kq.bang, nhomTuCap([[0, 5], [2, 7]]));
+  bang(t.hang[0].slice(0, 3), ["Nhóm", "Lý do coi là trùng", "Dòng trên trang nguồn"]);
+  bang(t.hang[1][0], 1);
+  bang(t.hang[3][0], 2, "nhóm thứ hai phải mang số 2");
+});
+
+/* ══════════════════════════════════════════════════════════ */
+nhomCa("Vỏ add-in — chọn ô và tô màu");
+
+function soThu() {
+  const gt = [["Mã", "Giá trị"], ["BN1", 10], ["BN2", 20], ["BN3", 30]];
+  return taoExcelGia([
+    { ten: "Goc", gt: gt.map((h) => h.slice()) },
+    { ten: "Doi chieu", gt: gt.map((h) => h.slice()) },
+  ]);
+}
+
+ca("chọn ô trên trang gốc mà KHÔNG tô, không đổi giá trị nào — ca âm quan trọng nhất", async () => {
+  const { Excel, so } = soThu();
+  const truoc = JSON.stringify(so.trang.find((t) => t.ten === "Goc").gt);
+  await chonVung(Excel, { tenTrang: "Goc", hang: 2, cot: 1 });
+
+  const goc = so.trang.find((t) => t.ten === "Goc");
+  bang(so.daChon.trang, "Goc");
+  bang([so.daChon.r, so.daChon.c], [2, 1]);
+  bang(goc.toMau, undefined, "KHÔNG được tô một ô nào trên trang gốc");
+  bang(JSON.stringify(goc.gt), truoc, "KHÔNG được đổi một giá trị nào trên trang gốc");
+});
+
+ca("chọn cả dòng khi cần xem trọn bản ghi", async () => {
+  const { Excel, so } = soThu();
+  await chonVung(Excel, { tenTrang: "Goc", hang: 1, caDong: true });
+  bang(so.daChon.c, 0, "cả dòng thì phải bắt đầu từ cột đầu");
+  dung(so.daChon.nc >= 2, "phải phủ hết bề rộng bảng");
+});
+
+ca("tô màu chỉ chạm trang Đối chiếu, không chạm trang gốc — ca âm", async () => {
+  const { Excel, so } = soThu();
+  const r = await toVung(Excel, "Doi chieu", [
+    { hang: 1, cot: 1 }, { hang: 2, cot: 1 }, { hang: 3, cot: 1 },
+  ]);
+  bang(r.soVung, 1, "ba ô liên tiếp trong một cột phải gộp thành một vùng");
+  const dc = so.trang.find((t) => t.ten === "Doi chieu");
+  const goc = so.trang.find((t) => t.ten === "Goc");
+  bang(dc.toMau.length, 1);
+  bang(goc.toMau, undefined, "trang gốc tuyệt đối không được tô");
+});
+
+ca("vượt ngưỡng vùng thì báo lại số vùng đã bỏ để vỏ còn nói ra", async () => {
+  const { Excel } = soThu();
+  const o = [];
+  for (let h = 0; h < 40; h++) o.push({ hang: h, cot: 0 });
+  for (let c = 1; c <= 6; c++) o.push({ hang: 60, cot: c });
+  const r = await toVung(Excel, "Doi chieu", o, { toiDa: 3 });
+  bang(r.soVung, 3);
+  bang(r.soVungBo, 4);
+  dung(r.soODaBo > 0, "phải nói cả số ô đã bỏ, không chỉ số vùng");
 });
 
 /* ══════════════════════════════════════════════════════════ */

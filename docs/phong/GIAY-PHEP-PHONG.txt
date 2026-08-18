@@ -1,0 +1,17 @@
+GIẤY PHÉP PHÔNG CHỮ
+
+Ba họ phông dùng trong thư mục này đều theo SIL Open Font License phiên bản 1.1.
+Giấy phép cho phép dùng, chép, sửa và phát hành lại, kể cả trong sản phẩm thương
+mại, với điều kiện kèm theo bản giấy phép này.
+
+  Inter          Rasmus Andersson — https://github.com/rsms/inter
+  JetBrains Mono JetBrains s.r.o.  — https://github.com/JetBrains/JetBrainsMono
+  Fraunces       Undercase Type    — https://github.com/undercasetype/Fraunces
+
+Các tệp .woff trong thư mục này là bản RÚT GỌN của phông gốc: chỉ giữ dải ký tự
+tiếng Việt và một số ký hiệu giao diện, để giảm dung lượng tải về. Việc rút gọn là
+một dạng sửa đổi mà giấy phép cho phép. Tên phông giữ nguyên như bản gốc.
+
+Xem kịch bản dựng lại tại docs/phong/dung-phong.py.
+
+Toàn văn giấy phép: https://openfontlicense.org

@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="vi" data-giao-dien="sang">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>DA Assist — xem thử bảng điều khiển</title>
+<link rel="icon" href="bieu-tuong-32.png">
+<link rel="stylesheet" href="kieu-addin.css">
+<style>
+  /* Khung hẹp đúng bằng task pane thật của Excel, để nhìn ra chỗ nào chật. */
+  body { max-width: 380px; margin: 0; border-left: 1px solid var(--vien);
+         border-right: 1px solid var(--vien); min-height: 100vh; }
+  .thanh-xem-thu {
+    position: sticky; top: 0; z-index: 9; margin: -12px -14px 12px;
+    padding: 7px 14px; background: var(--nen-3); border-bottom: 1px solid var(--vien);
+    font-size: 11.5px; color: var(--chu-mo); display: flex; gap: 8px; align-items: center;
+  }
+  .thanh-xem-thu button { padding: 4px 8px; font-size: 11.5px; }
+</style>
+</head>
+<body>
+
+<div class="thanh-xem-thu">
+  <b>Xem thử</b> — dữ liệu mô phỏng, không có Excel
+  <button id="doi-nen" style="margin-left:auto">Sáng / tối</button>
+</div>
+
+<div class="dinh">
+  <h1>DA Assist</h1>
+  <span class="phu">rà soát &amp; làm sạch</span>
+</div>
+<p class="cam-ket">
+  Chạy trong máy này. Không gửi dữ liệu đi đâu.
+  Kết quả luôn ghi sang trang tính mới, không đụng trang gốc.
+</p>
+
+<div class="buoc-thanh" id="thanh-buoc"></div>
+<div id="than"><p class="giua">Đang dựng dữ liệu mô phỏng…</p></div>
+
+<script type="module">
+/**
+ * Trang xem thử bảng điều khiển add-in.
+ *
+ * Dùng để nhìn giao diện mà không cần mở Excel — khi giảng bài, và khi cần xem lại
+ * bố cục sau mỗi lần sửa. Nó nạp ĐÚNG mô-đun giao diện của add-in thật, chỉ thay
+ * Excel bằng một bộ giả, nên cái bạn thấy ở đây là cái add-in sẽ hiện.
+ *
+ * DỮ LIỆU Ở ĐÂY LÀ MÔ PHỎNG, sinh ra lúc chạy. Không có tệp dữ liệu nào trong kho.
+ */
+import { taoExcelGia } from "../bo-thu/excel-gia.js";
+import { sinhDanhSachY } from "../bo-thu/mau.js";
+
+// Một danh sách nhỏ có sẵn vài loại lỗi, đủ để mọi phần giao diện có gì đó để vẽ.
+const mau = sinhDanhSachY({
+  soDong: 40,
+  ketThucTruocBatDau: 3,
+  khamSauTuVong: 2,
+  tuVongMaThieuNgay: 4,
+  coLyDoThieuNgayKetThuc: 2,
+  maTrungKhacGioi: 2,
+  maLechKhuon: 3,
+  dtThieuSoKhong: 2,
+});
+
+const { Excel } = taoExcelGia([{ ten: "Danh sach ca benh", gt: mau.hang }]);
+window.__DA_EXCEL = Excel;
+
+document.getElementById("doi-nen").onclick = () => {
+  const g = document.documentElement.dataset.giaoDien;
+  document.documentElement.dataset.giaoDien = g === "toi" ? "sang" : "toi";
+};
+
+await import("./giao-dien-addin.js");
+</script>
+</body>
+</html>

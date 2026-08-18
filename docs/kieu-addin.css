@@ -1,0 +1,224 @@
+/* DA Assist — kiểu của bảng điều khiển add-in.
+ *
+ * Phông và cách bố cục lấy theo trình soạn câu lệnh của bài S3; nền và viền lấy
+ * theo xám trung tính của Office, để task pane trông như một phần của Excel chứ
+ * không như một trang web dán vào.
+ *
+ * Sáng hay tối do thuộc tính data-giao-dien trên thẻ html quyết định. Giá trị ấy
+ * do mã đọc từ Office.context.officeTheme rồi tính độ sáng mà đặt — không đọc tên
+ * giao diện, vì Excel có bốn giao diện và tên không nói được độ sáng của thân
+ * task pane.
+ */
+
+@font-face {
+  font-family: "Inter"; font-style: normal; font-weight: 400; font-display: swap;
+  src: url("phong/Inter-Regular.woff") format("woff");
+}
+@font-face {
+  font-family: "JetBrains Mono"; font-style: normal; font-weight: 400; font-display: swap;
+  src: url("phong/JetBrainsMono-Regular.woff") format("woff");
+}
+@font-face {
+  font-family: "JetBrains Mono"; font-style: normal; font-weight: 700; font-display: swap;
+  src: url("phong/JetBrainsMono-Bold.woff") format("woff");
+}
+@font-face {
+  font-family: "Fraunces"; font-style: normal; font-weight: 400; font-display: swap;
+  src: url("phong/Fraunces-Regular.woff") format("woff");
+}
+
+:root, [data-giao-dien="sang"] {
+  --nen: #ffffff;
+  --nen-2: #f3f2f1;
+  --nen-3: #e9e8e6;
+  --vien: #d9d7d4;
+  --vien-manh: #c8c6c4;
+  --chu: #201f1e;
+  --chu-mo: #605e5c;
+  --chu-rat-mo: #8a8886;
+  --nhan: #0f6cbd;
+  --nhan-nhat: #eff6fc;
+  --do: #a4262c;
+  --do-nhat: #fdf3f4;
+  --vang: #855b00;
+  --vang-nhat: #fdf6e3;
+  --luc: #0e700e;
+  --luc-nhat: #f1faf1;
+  --to: #fff3cd;
+}
+
+[data-giao-dien="toi"] {
+  --nen: #1f1f1f;
+  --nen-2: #292929;
+  --nen-3: #333333;
+  --vien: #3d3d3d;
+  --vien-manh: #4f4f4f;
+  --chu: #f3f2f1;
+  --chu-mo: #b3b0ad;
+  --chu-rat-mo: #8a8886;
+  --nhan: #6cb8f6;
+  --nhan-nhat: #12212f;
+  --do: #f1707b;
+  --do-nhat: #2d1619;
+  --vang: #e5b95c;
+  --vang-nhat: #2b2312;
+  --luc: #6bb700;
+  --luc-nhat: #17240f;
+  --to: #4a3f18;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  padding: 12px 14px 28px;
+  background: var(--nen);
+  color: var(--chu);
+  font: 13.5px/1.55 "Inter", "Segoe UI", system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ── Đầu trang ─────────────────────────────────────────────────────── */
+
+.dinh { display: flex; align-items: baseline; gap: 8px; margin-bottom: 2px; }
+.dinh h1 {
+  font: 400 20px/1.2 "Fraunces", Georgia, serif;
+  margin: 0; letter-spacing: -0.01em;
+}
+.dinh .phu { font-size: 11.5px; color: var(--chu-rat-mo); }
+.cam-ket {
+  font-size: 11.5px; color: var(--chu-mo); margin: 0 0 12px;
+  padding-bottom: 10px; border-bottom: 1px solid var(--vien);
+}
+
+/* ── Ba bước ───────────────────────────────────────────────────────── */
+
+.buoc-thanh { display: flex; gap: 4px; margin-bottom: 14px; }
+.buoc-o {
+  flex: 1; text-align: center; padding: 6px 2px 7px;
+  border: 1px solid var(--vien); border-radius: 6px;
+  background: var(--nen-2); color: var(--chu-rat-mo);
+  font-size: 11px; line-height: 1.25;
+}
+.buoc-o .so {
+  display: block; font: 700 13px/1 "JetBrains Mono", monospace; margin-bottom: 3px;
+}
+.buoc-o.dang {
+  background: var(--nhan-nhat); border-color: var(--nhan); color: var(--nhan);
+  font-weight: 600;
+}
+.buoc-o.xong { color: var(--luc); border-color: var(--luc); background: var(--luc-nhat); }
+
+/* ── Khối ──────────────────────────────────────────────────────────── */
+
+.the {
+  border: 1px solid var(--vien); border-radius: 8px;
+  background: var(--nen-2); padding: 12px; margin-bottom: 12px;
+}
+.the h2 {
+  font: 600 13px/1.3 "Inter", sans-serif; margin: 0 0 8px;
+  text-transform: uppercase; letter-spacing: 0.04em; color: var(--chu-mo);
+}
+.luoi { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 8px; }
+.so-lieu {
+  flex: 1 1 68px; background: var(--nen); border: 1px solid var(--vien);
+  border-radius: 6px; padding: 7px 8px;
+}
+.so-lieu b {
+  display: block; font: 400 17px/1.15 "JetBrains Mono", monospace; color: var(--chu);
+}
+.so-lieu small { display: block; font-size: 10.5px; color: var(--chu-rat-mo); margin-top: 2px; }
+
+/* ── Nút ───────────────────────────────────────────────────────────── */
+
+.hang-nut { display: flex; gap: 8px; flex-wrap: wrap; }
+button {
+  font: 500 13px/1 "Inter", sans-serif; padding: 9px 14px;
+  border-radius: 6px; border: 1px solid var(--vien-manh);
+  background: var(--nen); color: var(--chu); cursor: pointer;
+}
+button:hover:not(:disabled) { background: var(--nen-3); }
+button:disabled { opacity: 0.45; cursor: default; }
+button.chinh { background: var(--nhan); border-color: var(--nhan); color: #fff; }
+button.chinh:hover:not(:disabled) { filter: brightness(1.08); }
+button.chinh:disabled { filter: none; }
+
+/* ── Phát hiện ─────────────────────────────────────────────────────── */
+
+.muc-tieu-de {
+  display: flex; align-items: center; gap: 6px;
+  font-size: 11.5px; font-weight: 600; text-transform: uppercase;
+  letter-spacing: 0.04em; margin: 12px 0 6px; color: var(--chu-mo);
+}
+.muc-tieu-de .dem {
+  font: 400 11px/1 "JetBrains Mono", monospace;
+  background: var(--nen-3); border-radius: 10px; padding: 3px 7px; color: var(--chu-mo);
+}
+
+.bao {
+  border: 1px solid var(--vien); border-left-width: 3px; border-radius: 6px;
+  background: var(--nen); padding: 9px 10px; margin-bottom: 7px;
+  cursor: pointer;
+}
+.bao:hover { background: var(--nen-3); }
+.bao.chac-chan { border-left-color: var(--do); }
+.bao.can-xac-minh { border-left-color: var(--vang); }
+.bao.ghi-nhan { border-left-color: var(--chu-rat-mo); cursor: default; }
+.bao.ghi-nhan:hover { background: var(--nen); }
+
+.bao .dau { display: flex; align-items: baseline; gap: 7px; flex-wrap: wrap; }
+.bao .ma {
+  font: 700 10.5px/1 "JetBrains Mono", monospace; letter-spacing: 0.02em;
+  padding: 3px 5px; border-radius: 4px; background: var(--nen-3); color: var(--chu-mo);
+}
+.bao .cot { font-weight: 600; font-size: 12.5px; }
+.bao .dem-dong { font-size: 11px; color: var(--chu-rat-mo); margin-left: auto; }
+.bao p { margin: 5px 0 0; font-size: 12.5px; }
+.bao .vi-du {
+  font: 11.5px/1.5 "JetBrains Mono", monospace; color: var(--chu-mo);
+  white-space: pre-wrap; margin-top: 5px;
+}
+.bao .de-xuat { color: var(--luc); font-size: 12px; }
+.bao .chi-dan { font-size: 11px; color: var(--chu-rat-mo); margin-top: 5px; }
+
+/* ── Bảng xem trước ────────────────────────────────────────────────── */
+
+.cuon { overflow-x: auto; border: 1px solid var(--vien); border-radius: 6px; }
+table { border-collapse: collapse; width: 100%; font-size: 12px; }
+th, td {
+  text-align: left; padding: 5px 7px; border-bottom: 1px solid var(--vien);
+  white-space: nowrap;
+}
+th { background: var(--nen-3); font-weight: 600; font-size: 11px; color: var(--chu-mo); }
+td.cu { color: var(--do); font-family: "JetBrains Mono", monospace; }
+td.moi { color: var(--luc); font-family: "JetBrains Mono", monospace; }
+
+/* ── Hộp chọn và câu hỏi ───────────────────────────────────────────── */
+
+.chon-nhom {
+  display: flex; gap: 8px; align-items: flex-start;
+  padding: 9px 10px; border: 1px solid var(--vien); border-radius: 6px;
+  background: var(--nen); margin-bottom: 7px;
+}
+.chon-nhom input { margin-top: 3px; }
+.chon-nhom .ten { font-weight: 600; font-size: 12.5px; }
+.chon-nhom .mo-ta { font-size: 12px; color: var(--chu-mo); margin-top: 2px; }
+
+.hoi { border: 1px solid var(--vang); background: var(--vang-nhat); }
+.hoi .cau { font-weight: 600; font-size: 12.5px; margin-bottom: 6px; }
+.hoi .vi-sao { font-size: 11.5px; color: var(--chu-mo); margin-bottom: 7px; }
+
+/* ── Linh tinh ─────────────────────────────────────────────────────── */
+
+.luu-y {
+  border: 1px solid var(--vang); background: var(--vang-nhat);
+  border-radius: 6px; padding: 9px 10px; margin: 8px 0; font-size: 12.5px;
+}
+.mo { color: var(--chu-mo); font-size: 12px; }
+.loi { color: var(--do); }
+.an { display: none; }
+.giua { text-align: center; padding: 26px 10px; color: var(--chu-mo); font-size: 12.5px; }
+
+/* Không dùng animation cho vòng quay: một số máy cơ quan tắt hiệu ứng chuyển động,
+   và khi ấy người dùng chỉ thấy một dấu chấm bất động. Dùng chữ thay cho hình. */
+.dang-chay { font-size: 12.5px; color: var(--nhan); }

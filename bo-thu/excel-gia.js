@@ -71,6 +71,29 @@ class VungGia {
         configurable: true,
       });
     }
+
+    // Tô màu: ghi thẳng vào sổ ghi của trang, không cần chờ sync — Office.js thật
+    // thì hoãn tới sync, nhưng ở đây cái ta cần đo là TRANG NÀO bị tô.
+    const tuVung = this;
+    this.format = {
+      fill: {
+        set color(v) {
+          tuVung._t.toMau = tuVung._t.toMau || [];
+          tuVung._t.toMau.push({ r: tuVung._r, c: tuVung._c, nr: tuVung._nr, nc: tuVung._nc, mau: v });
+        },
+        get color() { return undefined; },
+      },
+    };
+  }
+
+  /** Chọn vùng — chỉ di chuyển con trỏ, KHÔNG đổi một ô nào. */
+  select() {
+    this._ctx._so.daChon = { trang: this._t.ten, r: this._r, c: this._c, nr: this._nr, nc: this._nc };
+  }
+
+  /** Cả dòng, dùng khi muốn chọn trọn một bản ghi. */
+  getEntireRow() {
+    return new VungGia(this._ctx, this._t, this._r, 0, this._nr, Math.max(1, this._t.vungDaDung().nc));
   }
 
   load(p) {
@@ -127,6 +150,12 @@ class VungGia {
   }
 }
 
+/**
+ * Ghi lại việc CHỌN và việc TÔ MÀU, để bộ thử khẳng định được hai điều:
+ *   - công cụ chỉ chọn ô trên trang gốc, không tô gì lên đó
+ *   - công cụ chỉ tô trên trang do chính nó tạo ra
+ * Không ghi lại thì không có cách nào đo nguyên tắc "không đè lên bản gốc".
+ */
 class TrangTinhGia {
   constructor(ctx, trang) {
     this._ctx = ctx;
@@ -148,6 +177,24 @@ class TrangTinhGia {
 
   getRangeByIndexes(r, c, nr, nc) {
     return new VungGia(this._ctx, this._t, r, c, nr, nc);
+  }
+
+  /** Vùng theo địa chỉ kiểu A1, ví dụ "C2:C40" hoặc "B7". */
+  getRange(dc) {
+    const doc = (s) => {
+      const m = /^([A-Z]+)(\d+)$/.exec(s);
+      let c = 0;
+      for (const ch of m[1]) c = c * 26 + (ch.charCodeAt(0) - 64);
+      return { r: Number(m[2]) - 1, c: c - 1 };
+    };
+    const [a, b] = String(dc).toUpperCase().split(":");
+    const p = doc(a);
+    const q = b ? doc(b) : p;
+    return new VungGia(
+      this._ctx, this._t,
+      Math.min(p.r, q.r), Math.min(p.c, q.c),
+      Math.abs(q.r - p.r) + 1, Math.abs(q.c - p.c) + 1
+    );
   }
 
   activate() {
@@ -173,6 +220,13 @@ class DsTrangGia {
     for (const x of ds) this._can.add(String(x).trim());
     this._ctx._chuaXong.add(this);
     return this;
+  }
+
+  /** Lấy trang theo tên. Không có thì ném lỗi, đúng như Office.js thật. */
+  getItem(ten) {
+    const t = this._ctx._so.trang.find((x) => x.ten === ten);
+    if (!t) throw new Error(`Không có trang tính tên “${ten}”`);
+    return new TrangTinhGia(this._ctx, t);
   }
 
   getActiveWorksheet() {
