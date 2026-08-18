@@ -232,6 +232,21 @@ td.moi { color: var(--luc); font-family: "JetBrains Mono", monospace; }
 .hoi .cau { font-weight: 600; font-size: 12.5px; margin-bottom: 6px; }
 .hoi .vi-sao { font-size: 11.5px; color: var(--chu-mo); margin-bottom: 7px; }
 
+/* ── Chú giải màu ──────────────────────────────────────────────────── */
+
+/* Chú giải là bắt buộc, không phải trang trí. Người dùng mở trang Đã làm sạch ra
+   và thấy ô xanh ô vàng mà không có chỗ nào nói xanh vàng nghĩa gì thì màu chỉ
+   gây đoán mò. */
+.chu-giai {
+  display: flex; flex-direction: column; gap: 4px;
+  margin: 8px 0; font-size: 12px; color: var(--chu-mo);
+}
+.chu-giai span { display: flex; align-items: center; gap: 7px; }
+.chu-giai i {
+  width: 13px; height: 13px; flex: none; border-radius: 3px;
+  border: 1px solid var(--vien-manh);
+}
+
 /* ── Linh tinh ─────────────────────────────────────────────────────── */
 
 .luu-y {

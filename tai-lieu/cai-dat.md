@@ -145,6 +145,7 @@ Sau khi cài, add-in hiện ở thẻ **Trang đầu**, nhóm **DA Assist**.
 | Excel báo add-in không hợp lệ | Tệp `manifest.xml` tải về bị hỏng — tải lại từ kho, và mở ra xem dòng đầu có đúng là `<?xml version="1.0"...` chứ không phải trang HTML báo lỗi |
 | Dòng lệnh báo `Unable to connect` hoặc lỗi về SSL | Máy dùng Windows bản cũ nên PowerShell chưa bật TLS 1.2. Chạy `[Net.ServicePointManager]::SecurityProtocol = 'Tls12'` trước, rồi dán lại dòng lệnh cài |
 | Dòng lệnh chạy xong nhưng Excel vẫn không thấy add-in | Chưa đóng hẳn Excel. Hoặc máy bị chính sách của cơ quan chặn add-in kiểu này — khi đó dùng Cách 1, bản chạy trên trình duyệt |
+| Đã cài lại nhưng giao diện vẫn là bản cũ | Excel lưu đệm toàn bộ phần giao diện tải về, và bộ đệm ấy không tự hết hạn. Đóng **hẳn** Excel rồi chạy lại dòng lệnh cài — từ bản 0.2.1 kịch bản tự xoá bộ đệm khi Excel đã đóng |
 | Tên add-in trong Excel hiện ký tự lạ | Bản kê khai đã bị một công cụ nào đó ghi lại sai bảng mã. Gỡ rồi cài lại bằng dòng lệnh — kịch bản tải theo byte nên không làm hỏng dấu tiếng Việt |
 
 ---

@@ -95,10 +95,11 @@ export function kiemTrangThai(bang, tuyChon = {}) {
   // ------------------------------------------------------------------ Y2.1
   if (cNgayTV != null && (cTTDieuTri != null || cTTNguoi != null)) {
     const vp = [];
+    const vp_d = [];
     for (let i = 0; i < bang.dong.length; i++) {
       if (!docNgayTheo(oCua(i, cNgayTV), thuTu)) continue;
       const { nhom } = nhomDong(i);
-      if (nhom === NHOM_TT.DANG_DIEU_TRI) vp.push(`dòng ${soHang(i)}`);
+      if (nhom === NHOM_TT.DANG_DIEU_TRI) { vp_d.push(i); vp.push(`dòng ${soHang(i)}`); }
     }
     if (vp.length) {
       phat(ds, {
@@ -109,6 +110,7 @@ export function kiemTrangThai(bang, tuyChon = {}) {
         soDong: vp.length,
         moTa: `${vp.length} dòng ghi trạng thái đang điều trị nhưng lại có ngày tử vong.`,
         viDu: vp.slice(0, 5),
+        dongLoi: vp_d,
         deXuat: "Một trong hai cột chưa được cập nhật; đối chiếu với sổ điều trị.",
       });
     }
@@ -117,10 +119,11 @@ export function kiemTrangThai(bang, tuyChon = {}) {
   // ------------------------------------------------------------------ Y2.2
   if (cNgayTV != null && (cTTDieuTri != null || cTTNguoi != null)) {
     const vp = [];
+    const vp_d = [];
     for (let i = 0; i < bang.dong.length; i++) {
       const { nhom } = nhomDong(i);
       if (nhom !== NHOM_TT.TU_VONG) continue;
-      if (!docNgayTheo(oCua(i, cNgayTV), thuTu)) vp.push(`dòng ${soHang(i)}`);
+      if (!docNgayTheo(oCua(i, cNgayTV), thuTu)) { vp_d.push(i); vp.push(`dòng ${soHang(i)}`); }
     }
     if (vp.length) {
       phat(ds, {
@@ -133,6 +136,7 @@ export function kiemTrangThai(bang, tuyChon = {}) {
           `${vp.length} dòng ghi trạng thái tử vong nhưng không có ngày tử vong. ` +
           "Mọi phép tính theo thời gian sẽ bỏ sót đúng những ca này.",
         viDu: vp.slice(0, 5),
+        dongLoi: vp_d,
         deXuat: "Bổ sung ngày tử vong từ sổ nguồn, hoặc ghi rõ là không xác định được.",
       });
     }
@@ -156,9 +160,10 @@ export function kiemTrangThai(bang, tuyChon = {}) {
     ]) {
       if (cot == null) continue;
       const vp = [];
+      const vp_d = [];
       for (let i = 0; i < bang.dong.length; i++) {
         if (nhomCua(oCua(i, cKetQua)) !== NHOM_TT.AM_TINH) continue;
-        if (coGiaTri(oCua(i, cot))) vp.push(`dòng ${soHang(i)}`);
+        if (coGiaTri(oCua(i, cot))) { vp_d.push(i); vp.push(`dòng ${soHang(i)}`); }
       }
       if (!vp.length) continue;
       phat(ds, {
@@ -173,6 +178,7 @@ export function kiemTrangThai(bang, tuyChon = {}) {
           "trong khi chờ kết quả, và thuốc kháng HIV còn dùng để dự phòng cho người " +
           "chưa nhiễm. Máy không tự quyết.",
         viDu: vp.slice(0, 5),
+        dongLoi: vp_d,
         deXuat: "Đối chiếu hồ sơ: nếu là dự phòng hoặc đang chờ khẳng định thì ghi rõ vào cột trạng thái.",
       });
     }
@@ -181,12 +187,14 @@ export function kiemTrangThai(bang, tuyChon = {}) {
   // ------------------------------------------------------------ Y2.5, Y2.6
   if (cLyDo != null && cNgayKT != null) {
     const thieuNgay = [];
+    const thieuNgay_d = [];
     const thieuLyDo = [];
+    const thieuLyDo_d = [];
     for (let i = 0; i < bang.dong.length; i++) {
       const coLyDo = coGiaTri(oCua(i, cLyDo));
       const coNgay = !!docNgayTheo(oCua(i, cNgayKT), thuTu);
-      if (coLyDo && !coNgay) thieuNgay.push(`dòng ${soHang(i)}`);
-      if (coNgay && !coLyDo) thieuLyDo.push(`dòng ${soHang(i)}`);
+      if (coLyDo && !coNgay) { thieuNgay_d.push(i); thieuNgay.push(`dòng ${soHang(i)}`); }
+      if (coNgay && !coLyDo) { thieuLyDo_d.push(i); thieuLyDo.push(`dòng ${soHang(i)}`); }
     }
     if (thieuNgay.length) {
       phat(ds, {
@@ -197,6 +205,7 @@ export function kiemTrangThai(bang, tuyChon = {}) {
         soDong: thieuNgay.length,
         moTa: `${thieuNgay.length} dòng có lý do kết thúc nhưng không có ngày kết thúc.`,
         viDu: thieuNgay.slice(0, 5),
+        dongLoi: thieuNgay_d,
         deXuat: "Bổ sung ngày kết thúc, vì thiếu nó thì không xếp được ca vào kỳ báo cáo nào.",
       });
     }
@@ -209,6 +218,7 @@ export function kiemTrangThai(bang, tuyChon = {}) {
         soDong: thieuLyDo.length,
         moTa: `${thieuLyDo.length} dòng có ngày kết thúc nhưng không ghi lý do.`,
         viDu: thieuLyDo.slice(0, 5),
+        dongLoi: thieuLyDo_d,
         deXuat: "Bổ sung lý do; nếu không rõ thì ghi rõ là không xác định được.",
       });
     }
@@ -217,12 +227,13 @@ export function kiemTrangThai(bang, tuyChon = {}) {
   // ------------------------------------------------------------------ Y2.7
   if (cKhamCuoi != null && (cTTDieuTri != null || cTTNguoi != null) && cNgayKT != null) {
     const vp = [];
+    const vp_d = [];
     for (let i = 0; i < bang.dong.length; i++) {
       const { nhom } = nhomDong(i);
       if (nhom !== NHOM_TT.BO_TRI && nhom !== NHOM_TT.CHUYEN_DI) continue;
       const kt = docNgayTheo(oCua(i, cNgayKT), thuTu);
       const kham = docNgayTheo(oCua(i, cKhamCuoi), thuTu);
-      if (kt && kham && kham.getTime() > kt.getTime()) vp.push(`dòng ${soHang(i)}`);
+      if (kt && kham && kham.getTime() > kt.getTime()) { vp_d.push(i); vp.push(`dòng ${soHang(i)}`); }
     }
     if (vp.length) {
       phat(ds, {
@@ -235,6 +246,7 @@ export function kiemTrangThai(bang, tuyChon = {}) {
           `${vp.length} dòng ghi đã bỏ trị hoặc chuyển đi, nhưng ngày khám gần nhất ` +
           "lại sau ngày kết thúc. Có thể người bệnh đã quay lại mà trạng thái chưa được cập nhật.",
         viDu: vp.slice(0, 5),
+        dongLoi: vp_d,
         deXuat: "Cập nhật lại trạng thái nếu người bệnh đã quay lại điều trị.",
       });
     }
@@ -244,6 +256,7 @@ export function kiemTrangThai(bang, tuyChon = {}) {
   // Hai cột trạng thái nói ngược nhau.
   if (cTTDieuTri != null && cTTNguoi != null) {
     const vp = [];
+    const vp_d = [];
     for (let i = 0; i < bang.dong.length; i++) {
       const a = nhomCua(oCua(i, cTTDieuTri));
       const b = nhomCua(oCua(i, cTTNguoi));
@@ -251,7 +264,7 @@ export function kiemTrangThai(bang, tuyChon = {}) {
       const nguoc =
         (a === NHOM_TT.TU_VONG && b === NHOM_TT.DANG_DIEU_TRI) ||
         (b === NHOM_TT.TU_VONG && a === NHOM_TT.DANG_DIEU_TRI);
-      if (nguoc) vp.push(`dòng ${soHang(i)}: “${bang.dong[i][cTTDieuTri]}” và “${bang.dong[i][cTTNguoi]}”`);
+      if (nguoc) { vp_d.push(i); vp.push(`dòng ${soHang(i)}: “${bang.dong[i][cTTDieuTri]}” và “${bang.dong[i][cTTNguoi]}”`); }
     }
     if (vp.length) {
       phat(ds, {
@@ -262,6 +275,7 @@ export function kiemTrangThai(bang, tuyChon = {}) {
         soDong: vp.length,
         moTa: `${vp.length} dòng có hai cột trạng thái nói ngược nhau về cùng một người.`,
         viDu: vp.slice(0, 5),
+        dongLoi: vp_d,
         deXuat: "Chốt một cột làm cột chuẩn rồi cập nhật cột kia theo.",
       });
     }

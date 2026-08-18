@@ -27,7 +27,7 @@ function Ghi([string]$s, [string]$mau = 'Gray') { Write-Host $s -ForegroundColor
 
 Ghi ''
 Ghi '  DA ASSIST - cai add-in vao Excel' 'Cyan'
-Ghi '  Cong cu ra soat, lam sach va phan tich tep Excel so lieu HIV/AIDS' 'DarkGray'
+Ghi '  Cong cu ra soat, lam sach va tim ban ghi trung cho tep Excel so lieu HIV/AIDS' 'DarkGray'
 Ghi '  Ma nguon: https://github.com/codelabr/da-assist' 'DarkGray'
 Ghi ''
 
@@ -47,7 +47,7 @@ if ($dsPhienBan.Count -eq 0) {
   return
 }
 $phienBan = $dsPhienBan[0]
-Ghi "  [1/4] Tim thay Office phien ban $phienBan" 'Green'
+Ghi "  [1/5] Tim thay Office phien ban $phienBan" 'Green'
 if ($phienBan -eq '15.0') {
   Ghi '        Office 2013 khong ho tro nut tren dai lenh. Sau khi cai, mo' 'Yellow'
   Ghi '        add-in bang: Chen > Add-in cua toi.' 'Yellow'
@@ -56,11 +56,11 @@ if ($phienBan -eq '15.0') {
 # --- 2. Canh bao neu Excel dang chay ---------------------------------------
 $dangChay = Get-Process EXCEL -ErrorAction SilentlyContinue
 if ($dangChay) {
-  Ghi "  [2/4] Excel dang chay ($($dangChay.Count) tien trinh)" 'Yellow'
+  Ghi "  [2/5] Excel dang chay ($($dangChay.Count) tien trinh)" 'Yellow'
   Ghi '        Kich ban van cai duoc, nhung phai DONG HAN Excel roi mo lai' 'Yellow'
   Ghi '        thi add-in moi hien ra.' 'Yellow'
 } else {
-  Ghi '  [2/4] Excel dang dong - tot' 'Green'
+  Ghi '  [2/5] Excel dang dong - tot' 'Green'
 }
 
 # --- 3. Tai ban ke khai va kiem ------------------------------------------
@@ -69,7 +69,7 @@ if ($dangChay) {
 # ma ANSI khi phan hoi khong khai charset, nen ten add-in tieng Viet trong ban ke
 # khai se thanh ky tu rac; ghi lai chuoi da hong thanh UTF-8 thi ra mot ban ke
 # khai hong ma van dung cu phap XML. Ghi nguyen byte thi khong the sai.
-Ghi '  [3/4] Tai ban ke khai...' 'Gray'
+Ghi '  [3/5] Tai ban ke khai...' 'Gray'
 New-Item -ItemType Directory -Force -Path $THU_MUC | Out-Null
 $byte = (New-Object Net.WebClient).DownloadData($DIA_CHI_KE_KHAI)
 
@@ -101,8 +101,44 @@ Move-Item $tepTam $TEP_KE_KHAI -Force
 Ghi '        Da kiem: XML hop le, ma dinh danh dung' 'Green'
 Ghi "        Luu tai: $TEP_KE_KHAI" 'DarkGray'
 
-# --- 4. Khai vao so dang ky -----------------------------------------------
-Ghi '  [4/4] Khai vao so dang ky cua tai khoan hien tai...' 'Gray'
+# --- 4. Xoa bo dem web cua Office ------------------------------------------
+#
+# VI SAO PHAI CO BUOC NAY. Excel luu dem toan bo phan giao dien tai ve, va bo dem
+# ay KHONG het han theo Cache-Control cua may chu. Cai lai add-in chi ghi lai so
+# dang ky nen Excel van dung ban giao dien cu - da gap that: sua mau nut, day len
+# GitHub Pages, cai lai, va van thay ban cu.
+#
+# Thu muc nay chi chua ban sao tai ve cua cac add-in web. Xoa di thi lan mo sau
+# Excel tai lai tu dau. Dang ky add-in nam trong so dang ky HKCU chu khong nam o
+# day, nen xoa khong lam mat add-in nao.
+#
+# Chi xoa duoc khi Excel da dong han. Excel dang chay thi giu chot tep, va xoa
+# nua chung con te hon khong xoa.
+Ghi '  [4/5] Xoa bo dem web cua Office...' 'Gray'
+if ($dangChay) {
+  Ghi '        BO QUA vi Excel dang chay.' 'Yellow'
+  Ghi '        Neu sau khi cai van thay ban giao dien cu: dong han Excel roi' 'Yellow'
+  Ghi '        chay lai kich ban nay.' 'Yellow'
+} else {
+  $soXoa = 0
+  foreach ($v in $dsPhienBan) {
+    $boDem = Join-Path $env:LOCALAPPDATA ('Microsoft\Office\' + $v + '\Wef')
+    if (Test-Path $boDem) {
+      try {
+        Remove-Item $boDem -Recurse -Force -ErrorAction Stop
+        $soXoa++
+        Ghi "        Da xoa: $boDem" 'DarkGray'
+      } catch {
+        Ghi "        Khong xoa duoc: $boDem" 'Yellow'
+      }
+    }
+  }
+  if ($soXoa -eq 0) { Ghi '        Khong co gi de xoa' 'Green' }
+  else { Ghi '        Xong - lan mo sau Excel se tai lai giao dien moi nhat' 'Green' }
+}
+
+# --- 5. Khai vao so dang ky -----------------------------------------------
+Ghi '  [5/5] Khai vao so dang ky cua tai khoan hien tai...' 'Gray'
 foreach ($v in $dsPhienBan) {
   $khoa = "HKCU:\Software\Microsoft\Office\$v\WEF\Developer"
   New-Item -Path $khoa -Force | Out-Null

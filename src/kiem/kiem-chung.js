@@ -25,6 +25,45 @@ function phat(ds, o) {
   ds.push({ viDu: [], suaDuoc: false, ...o });
 }
 
+/**
+ * Chỉ số các dòng thoả một điều kiện trên một cột.
+ *
+ * Vì sao mọi phép kiểm theo ô đều phải trả về danh sách này: trang Đã làm sạch tô
+ * màu những ô còn vấn đề, mà muốn tô thì phải biết đích xác ô nào. Phép kiểm chỉ
+ * nói "cột này có 37 ô sai" thì lớp tô đành tô cả cột, và một cột vàng rực không
+ * chỉ ra được gì — nó chỉ làm bảng loang lổ rồi người dùng thôi nhìn màu.
+ */
+function dongThoa(bang, chiSo, dieu) {
+  const ra = [];
+  for (let i = 0; i < bang.dong.length; i++) {
+    if (dieu(bang.dong[i][chiSo], i)) ra.push(i);
+  }
+  return ra;
+}
+
+/** Ô đang giữ chuỗi có nội dung. */
+function laChuoi(v) {
+  return typeof v === "string" && v.trim() !== "";
+}
+
+/** Dòng có giá trị nằm trong một nhóm biến thể. */
+function dongThuocBienThe(bang, chiSo, nhomBt) {
+  const tap = new Set();
+  for (const b of nhomBt) for (const m of b.matChu) tap.add(m);
+  return dongThuocTap(bang, chiSo, tap);
+}
+
+/**
+ * Dòng có giá trị nằm trong một tập cho trước.
+ *
+ * So theo giá trị ĐÃ CẮT KHOẢNG TRẮNG, đúng cách mà bảng tần suất đánh khoá. Một
+ * bên đánh khoá theo giá trị thô còn bên kia tra theo giá trị đã cắt thì phép tra
+ * trượt hết, trả về rỗng, và không ô nào được tô.
+ */
+function dongThuocTap(bang, chiSo, tap) {
+  return dongThoa(bang, chiSo, (v) => v != null && v !== "" && tap.has(catTrang(v)));
+}
+
 function lay(tanSuat, n) {
   return [...tanSuat.entries()].sort((a, b) => b[1] - a[1]).slice(0, n);
 }
@@ -106,6 +145,7 @@ export function kiemChung(bang) {
         soDong: c.soNgayVanBan,
         moTa: `Có ${c.soNgayVanBan} ô ngày đang lưu dưới dạng văn bản. Excel không sắp xếp và không tính toán được trên các ô này.`,
         deXuat: "Chuyển sang ô ngày thật.",
+        dongLoi: dongThoa(bang, c.chiSo, laChuoi),
         suaDuoc: true,
       });
     }
@@ -126,6 +166,7 @@ export function kiemChung(bang) {
           moTa: `Cột chứa hai định dạng ngày lẫn nhau (${keKhai}). Mọi cách cắt chuỗi để lấy năm đều sai với một trong hai nhóm.`,
           viDu: lay(c.tanSuat, 4).map((x) => x[0]),
           deXuat: "Đưa cả cột về một định dạng ngày thống nhất trước khi tạo cột năm.",
+          dongLoi: dongThoa(bang, c.chiSo, laChuoi),
           suaDuoc: true,
         });
       }
@@ -138,6 +179,7 @@ export function kiemChung(bang) {
           soDong: c.dangNgay[DANG.SO_THU_TU],
           moTa: `Có ${c.dangNgay[DANG.SO_THU_TU]} ô là số thứ tự ngày của Excel chưa được định dạng, nên hiển thị ra một dãy số thay vì ngày.`,
           deXuat: "Định dạng lại các ô này thành ngày.",
+          dongLoi: dongThoa(bang, c.chiSo, (v) => typeof v === "number"),
           suaDuoc: true,
         });
       }
@@ -163,6 +205,9 @@ export function kiemChung(bang) {
         deXuat: laCotMa
           ? "Giữ nguyên dạng văn bản để không mất số 0 đứng đầu."
           : "Nếu là số để tính toán thì chuyển sang kiểu số. Nếu là mã định danh thì giữ nguyên dạng văn bản.",
+        dongLoi: laCotMa
+          ? []
+          : dongThoa(bang, c.chiSo, (v) => laChuoi(v) && /^-?[\d\s.,]+$/.test(v)),
       });
     }
 
@@ -175,6 +220,7 @@ export function kiemChung(bang) {
         soDong: c.soKhoangTrangThua,
         moTa: `Có ${c.soKhoangTrangThua} ô thừa khoảng trắng ở đầu, cuối hoặc giữa. Các ô này bị coi là giá trị khác khi tổng hợp.`,
         deXuat: "Cắt khoảng trắng thừa.",
+        dongLoi: dongThoa(bang, c.chiSo, (v) => typeof v === "string" && catTrang(v) !== v),
         suaDuoc: true,
       });
     }
@@ -199,6 +245,7 @@ export function kiemChung(bang) {
         moTa: `Có ${ht.nhomBt.length} giá trị được ghi theo nhiều cách khác nhau về hoa thường. Tổng hợp sẽ tách chúng thành nhiều nhóm riêng.`,
         viDu: ht.nhomBt.slice(0, 3).map((b) => b.matChu.join(" / ")),
         deXuat: "Thống nhất một cách viết hoa cho mỗi giá trị.",
+        dongLoi: dongThuocBienThe(bang, c.chiSo, ht.nhomBt),
         suaDuoc: true,
       });
     }
@@ -217,6 +264,7 @@ export function kiemChung(bang) {
           "khác nhau thật — nhiều địa danh Việt Nam chỉ phân biệt bằng dấu. Máy không tự gộp.",
         viDu: dau.nhomBt.slice(0, 3).map((b) => b.matChu.join(" / ")),
         deXuat: "Người dùng xem từng nhóm rồi quyết định gộp hay giữ riêng.",
+        dongLoi: dongThuocBienThe(bang, c.chiSo, dau.nhomBt),
       });
     }
 
@@ -243,6 +291,7 @@ export function kiemChung(bang) {
           moTa: `Cột chứa đồng thời mã cha và mã con (${cap.length} cặp). Tổng hợp thẳng theo cột này sẽ đếm song song hai cấp và ra bảng sai.`,
           viDu: cap.slice(0, 3).map((p) => `${p[0]}  ↔  ${p[1]}`),
           deXuat: "Chọn một cấp để tổng hợp: gộp mã con về mã cha, hoặc tách riêng hai cấp.",
+          dongLoi: dongThuocTap(bang, c.chiSo, new Set(cap.flat())),
         });
       }
 
@@ -257,6 +306,7 @@ export function kiemChung(bang) {
           moTa: `Có ${motLan.length} giá trị chỉ xuất hiện đúng một lần trong một cột phân loại. Thường là lỗi gõ hoặc giá trị ngoài danh mục.`,
           viDu: motLan.slice(0, 4).map((x) => x[0]),
           deXuat: "Đối chiếu với danh mục giá trị hợp lệ.",
+          dongLoi: dongThuocTap(bang, c.chiSo, new Set(motLan.map((x) => x[0]))),
         });
       }
     }

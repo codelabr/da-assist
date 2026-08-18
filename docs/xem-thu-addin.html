@@ -62,8 +62,11 @@ const mau = sinhDanhSachY({
   dtThieuSoKhong: 2,
 });
 
-const { Excel } = taoExcelGia([{ ten: "Danh sach ca benh", gt: mau.hang }]);
+const { Excel, so } = taoExcelGia([{ ten: "Danh sach ca benh", gt: mau.hang }]);
 window.__DA_EXCEL = Excel;
+// Phơi luôn sổ ghi của bộ Excel giả. Nhờ nó mà kiểm được bằng máy rằng trang gốc
+// không bị tô và không bị đổi, ngay trên trang xem thử chứ không chỉ trong bộ thử.
+window.__DA_SO = so;
 
 document.getElementById("doi-nen").onclick = () => {
   const g = document.documentElement.dataset.giaoDien;

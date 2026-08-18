@@ -149,10 +149,11 @@ export function kiemDinhDanh(bang, tuyChon = {}) {
       // Chỉ nêu khi có một khuôn dạng áp đảo; cột vốn nhiều khuôn dạng thì im lặng.
       if (demChinh >= day * 0.8) {
         const le = [];
+        const le_d = [];
         for (const [k, dsDong] of theoKhuon) {
           if (k === khuonChinh) continue;
           for (const i of dsDong.slice(0, 3)) {
-            le.push(`dòng ${soHang(i)}: “${catTrang(bang.dong[i][cMa])}” (${k})`);
+            { le_d.push(i); le.push(`dòng ${soHang(i)}: “${catTrang(bang.dong[i][cMa])}” (${k})`); }
           }
         }
         phat(ds, {
@@ -165,6 +166,7 @@ export function kiemDinhDanh(bang, tuyChon = {}) {
             `${day - demChinh} mã lệch khuôn dạng chung của cột. Phần lớn mã có dạng ` +
             `“${khuonChinh}”. Mã lệch khuôn thường là gõ thiếu, gõ thừa, hoặc dán từ nguồn khác.`,
           viDu: le.slice(0, 5),
+          dongLoi: le_d,
           deXuat: "Xem lại các mã lệch khuôn; đừng sửa hàng loạt vì có thể là mã của một hệ thống khác.",
         });
       }
@@ -190,6 +192,7 @@ export function kiemDinhDanh(bang, tuyChon = {}) {
   for (const k of dsKhuonSo) {
     if (k.cot == null || !k.dai.length) continue;
     const le = [];
+    const le_d = [];
     let matSoKhong = 0;
     for (let i = 0; i < bang.dong.length; i++) {
       const v = bang.dong[i][k.cot];
@@ -200,7 +203,7 @@ export function kiemDinhDanh(bang, tuyChon = {}) {
       // Thiếu đúng một chữ số so với độ dài hợp lệ ngắn nhất, và ô lưu dạng số:
       // gần như chắc chắn là Excel đã ăn mất số 0 ở đầu.
       if (typeof v === "number" && k.dai.includes(s.length + 1)) matSoKhong++;
-      le.push(`dòng ${soHang(i)}: “${catTrang(v)}” (${s.length} chữ số)`);
+      { le_d.push(i); le.push(`dòng ${soHang(i)}: “${catTrang(v)}” (${s.length} chữ số)`); }
     }
     if (!le.length) continue;
     const themVeSoKhong = matSoKhong
@@ -215,6 +218,7 @@ export function kiemDinhDanh(bang, tuyChon = {}) {
       soDong: le.length,
       moTa: `${le.length} ô không đúng số chữ số. ${k.moTa}${themVeSoKhong}`,
       viDu: le.slice(0, 5),
+      dongLoi: le_d,
       deXuat: matSoKhong
         ? "Đổi cả cột sang dạng văn bản rồi phục hồi số 0 ở đầu; đừng sửa từng ô."
         : "Đối chiếu lại với hồ sơ gốc.",

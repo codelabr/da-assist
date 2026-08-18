@@ -29,7 +29,7 @@ import { nhanDang } from "../src/ho-so/nhan-dang.js";
 import { nhanKhaiNiem } from "../src/tu-dien/khai-niem.js";
 import { chuCot, gomVung } from "../src/tien-ich/vung.js";
 import {
-  dungBoTrang, nhomTuCap, oCoVanDe, trangNhomTrung, trangVanDe,
+  dungBoTrang, nhomTuCap, oToMau, trangNhomTrung, trangVanDe,
 } from "../src/xuat/bo-trang.js";
 import { kiemBieuTT05, nhanDangBieu } from "../src/ho-so/tt05-bieu-bao-cao.js";
 import HO_SO from "../src/ho-so/hivinfo-giam-sat-ca-benh.js";
@@ -1979,15 +1979,153 @@ ca("trang Danh sách vấn đề có địa chỉ ô trỏ vào trang nguồn", 
   );
 });
 
-ca("ô có vấn đề KHÔNG lấy từ mục ghi nhận — ca âm", () => {
-  const kq = raSoat(sinhDanhSachY({ soDong: 20 }));
-  const ghiNhan = kq.phatHien.filter((p) => p.mucDo === MUC.GHI_NHAN);
-  dung(ghiNhan.length > 0, "bộ sinh phải có ít nhất một mục ghi nhận");
-  const o = oCoVanDe(kq.bang, ghiNhan);
-  bang(o.length, 0, "mục ghi nhận không phải lỗi nên không tô ô nào");
+// Ba ca dưới đây đo toạ độ ô sẽ được tô trên trang Đã làm sạch.
+//
+// Vì sao phải đo kỹ: toạ độ ấy trải qua hai phép dịch mà không phép nào thấy được
+// bằng mắt trên bộ thử — bỏ dòng trùng làm mọi dòng phía sau dồn lên một bậc, và
+// trang kết quả có thêm hàng tiêu đề. Lệch một dòng thì màu chỉ sang ô bên cạnh ô
+// thật sự đã đổi, mà bảng vẫn trông như đúng.
+
+function bangCanSua() {
+  return [
+    ["TT", "Tên", "Giới", "Ngày"],
+    [1, "Người A", "Nam ", "26/05/2019"],
+    [2, "Người B", "nam", "27/05/2019"],
+    [3, "Người C", "Nữ", "28/05/2019"],
+  ];
+}
+
+ca("ô đã đổi trỏ đúng dòng trên trang kết quả, đã tính hàng tiêu đề", () => {
+  const b = bangTu(bangCanSua());
+  const dx = deXuatSua(b, [], {});
+  const r = apDung(b, dx, dx.map((d) => d.ma));
+  dung(r.oDaSua.length > 0, "phải có ô được đánh dấu là đã đổi");
+  for (const o of r.oDaSua) {
+    dung(o.hang >= 1, "không ô nào được trỏ vào hàng tiêu đề");
+    dung(o.hang < r.hang.length, "không ô nào được trỏ ra ngoài bảng kết quả");
+  }
+  // Ô đầu tiên phải là khoảng trắng thừa ở dòng dữ liệu thứ nhất, tức hàng 1.
+  dung(
+    r.oDaSua.some((o) => o.hang === 1 && o.cot === 2),
+    "ô “Nam ” ở dòng dữ liệu đầu phải được đánh dấu"
+  );
 });
 
-ca("bộ trang gồm đủ Đã làm sạch, Đối chiếu, Danh sách vấn đề, Nhóm trùng", () => {
+ca("số ô đã đổi khớp với số dòng nhật ký, không đếm dòng bị bỏ", () => {
+  const b = bangTu(bangCanSua());
+  const dx = deXuatSua(b, [], {});
+  const r = apDung(b, dx, dx.map((d) => d.ma));
+  const soODoi = r.nhatKy.filter((x) => x.cot !== "(toàn dòng)").length;
+  bang(r.oDaSua.length, soODoi, "mỗi ô đã đổi phải ứng đúng một dòng nhật ký");
+});
+
+ca("ô nằm trên dòng bị bỏ thì KHÔNG được tô — ca âm", () => {
+  const gt = bangCanSua();
+  // Dòng trùng dòng đầu, chỉ khác cột số thứ tự, và cũng thừa khoảng trắng.
+  gt.push([4, "Người A", "Nam ", "26/05/2019"]);
+  // Phải qua raSoat: nhóm bỏ dòng trùng sinh ra từ phát hiện KC12, không sinh
+  // ra từ chính bảng, nên truyền phát hiện rỗng thì không có dòng nào bị bỏ.
+  const kq = raSoat({ ten: "thu", hang: gt });
+  const dx = deXuatSua(kq.bang, kq.phatHien, {});
+  const r = apDung(kq.bang, dx, dx.map((d) => d.ma));
+  bang(r.hang.length, 4, "một dòng trùng phải bị bỏ");
+  for (const o of r.oDaSua) {
+    dung(o.hang < r.hang.length, "không được trỏ vào dòng đã bị bỏ");
+  }
+});
+
+// ── Lớp tô màu trên trang Đã làm sạch ───────────────────────────────────────
+//
+// Ca âm quan trọng nhất của cả nhóm là ca cuối: phát hiện chỉ nói về cả cột thì
+// KHÔNG được tô ô nào. Bản đầu tô cả cột trong trường hợp ấy, và người dùng nói
+// đúng một câu — tô cả cột thì không có ý nghĩa gì cả.
+
+function bangDeToMau() {
+  const gt = [
+    ["TT", "Tên", "Giới", "Ngày"],
+    [1, "Người A", "Nam ", "26/05/2019"],
+    [2, "Người B", "nam", "27/05/2019"],
+    [3, "Người C", "Nữ", "28/05/2019"],
+  ];
+  gt.push([4, "Người A", "Nam ", "26/05/2019"]); // trùng dòng đầu
+  const kq = raSoat({ ten: "thu", hang: gt });
+  const dx = deXuatSua(kq.bang, kq.phatHien, {});
+  const r = apDung(kq.bang, dx, dx.map((d) => d.ma));
+  return { kq, r };
+}
+
+ca("ô đã sửa tô xanh, và không ô nào trỏ vào hàng tiêu đề", () => {
+  const { kq, r } = bangDeToMau();
+  const m = oToMau(kq.bang, kq.phatHien, r);
+  dung(m.xanh.length > 0, "phải có ô xanh");
+  for (const o of m.xanh) {
+    dung(o.hang >= 1, "không được tô hàng tiêu đề");
+    dung(o.hang < r.hang.length, "không được trỏ ra ngoài bảng kết quả");
+  }
+});
+
+ca("dòng giữ lại của nhóm trùng được tô cả dòng", () => {
+  const { kq, r } = bangDeToMau();
+  bang(r.dongGiuTrung.length, 1, "một nhóm trùng thì có một dòng được giữ");
+  const m = oToMau(kq.bang, kq.phatHien, r);
+  const h = r.dongGiuTrung[0];
+  const cot = m.xanh.filter((o) => o.hang === h).map((o) => o.cot).sort((a, b) => a - b);
+  bang(cot, [0, 1, 2, 3], "phải tô đủ bốn cột của dòng ấy");
+});
+
+ca("cột đã được phép sửa xử lý thì phát hiện sửa được ở cột ấy hết vàng — ca âm", () => {
+  const { kq, r } = bangDeToMau();
+  const m = oToMau(kq.bang, kq.phatHien, r);
+  const cotDaSua = new Set(r.oDaSua.map((o) => o.cot));
+  for (const p of kq.phatHien) {
+    if (!p.suaDuoc || !cotDaSua.has(p.chiSoCot)) continue;
+    sai(
+      m.vang.some((o) => o.cot === p.chiSoCot),
+      "phát hiện " + p.ma + " đã được sửa mà cột vẫn còn ô vàng"
+    );
+  }
+});
+
+ca("ô vừa được sửa định dạng vừa còn lỗi khác thì VẪN phải vàng", () => {
+  // Ngày lưu dạng văn bản được chuẩn hoá thành ô ngày thật là xong việc định dạng,
+  // nhưng ngày kết thúc vẫn đứng trước ngày bắt đầu. Loại ô ấy khỏi màu vàng chỉ vì
+  // nó đã được đổi thì lỗi thứ hai biến mất khỏi màu, mà nó mới là lỗi cần người xem.
+  const gt = [["TT", "Mã bệnh nhân", "Ngày điều trị ARV lần đầu", "Ngày kết thúc"]];
+  for (let i = 0; i < 12; i++) gt.push([i + 1, "BN" + i, "01/02/2020", "01/03/2020"]);
+  gt[4][3] = "01/01/2019";
+  const kq = raSoat({ ten: "thu", hang: gt });
+  const dx = deXuatSua(kq.bang, kq.phatHien, {});
+  const r = apDung(kq.bang, dx, dx.map((d) => d.ma));
+  const m = oToMau(kq.bang, kq.phatHien, r);
+  dung(
+    m.vang.some((o) => o.hang === 4 && o.cot === 3),
+    "ô vi phạm thứ tự ngày phải còn vàng dù đã được chuẩn hoá định dạng"
+  );
+  dung(
+    m.xanh.some((o) => o.hang === 4 && o.cot === 3),
+    "chính ô ấy cũng nằm trong nhóm đã sửa; vàng tô sau nên thắng trên màn hình"
+  );
+});
+
+ca("phát hiện chỉ nói về cả cột thì KHÔNG tô ô nào — ca âm", () => {
+  const { kq, r } = bangDeToMau();
+  // KC02 cột không tiêu đề nói về cả cột: không có dongLoi, nên phải bị đếm vào
+  // soKhongDinhVi chứ không được biến thành một cột vàng.
+  const chung = [{ ma: "GIA", mucDo: MUC.CHAC_CHAN, chiSoCot: 1, soDong: 4, moTa: "" }];
+  const m = oToMau(kq.bang, chung, r);
+  bang(m.vang.length, 0, "không được tô ô nào cho phát hiện không định vị được");
+  bang(m.soKhongDinhVi, 1, "phải đếm lại để vỏ còn nói ra");
+});
+
+ca("mục ghi nhận không sinh ra ô vàng nào — ca âm", () => {
+  const { kq, r } = bangDeToMau();
+  const gn = [{ ma: "GIA", mucDo: MUC.GHI_NHAN, chiSoCot: 2, soDong: 4, moTa: "", dongLoi: [0, 1] }];
+  const m = oToMau(kq.bang, gn, r);
+  bang(m.vang.length, 0, "ghi nhận không phải lỗi nên không tô");
+  bang(m.soKhongDinhVi, 0, "cũng không được đếm là không định vị được");
+});
+
+ca("bộ trang gồm đủ Đã làm sạch, Danh sách vấn đề, Nhóm trùng — KHÔNG có Đối chiếu", () => {
   const kq = raSoat(sinhDanhSachY({ soDong: 20, ketThucTruocBatDau: 2 }));
   const ds = dungBoTrang({
     bang: kq.bang,
@@ -1996,7 +2134,7 @@ ca("bộ trang gồm đủ Đã làm sạch, Đối chiếu, Danh sách vấn đ
     dsNhomTrung: nhomTuCap([[0, 5]]),
     tenTrangGoc: "Trang goc",
   });
-  bang(ds.map((t) => t.ten), ["Da lam sach", "Doi chieu", "Danh sach van de", "Nhom trung"]);
+  bang(ds.map((t) => t.ten), ["Da lam sach", "Danh sach van de", "Nhom trung"]);
 });
 
 ca("trang Nhóm trùng có cột số nhóm, để còn dùng được sau khi sắp xếp", () => {
@@ -2014,7 +2152,7 @@ function soThu() {
   const gt = [["Mã", "Giá trị"], ["BN1", 10], ["BN2", 20], ["BN3", 30]];
   return taoExcelGia([
     { ten: "Goc", gt: gt.map((h) => h.slice()) },
-    { ten: "Doi chieu", gt: gt.map((h) => h.slice()) },
+    { ten: "Da lam sach", gt: gt.map((h) => h.slice()) },
   ]);
 }
 
@@ -2037,13 +2175,13 @@ ca("chọn cả dòng khi cần xem trọn bản ghi", async () => {
   dung(so.daChon.nc >= 2, "phải phủ hết bề rộng bảng");
 });
 
-ca("tô màu chỉ chạm trang Đối chiếu, không chạm trang gốc — ca âm", async () => {
+ca("tô màu chỉ chạm trang Đã làm sạch, không chạm trang gốc — ca âm", async () => {
   const { Excel, so } = soThu();
-  const r = await toVung(Excel, "Doi chieu", [
+  const r = await toVung(Excel, "Da lam sach", [
     { hang: 1, cot: 1 }, { hang: 2, cot: 1 }, { hang: 3, cot: 1 },
   ]);
   bang(r.soVung, 1, "ba ô liên tiếp trong một cột phải gộp thành một vùng");
-  const dc = so.trang.find((t) => t.ten === "Doi chieu");
+  const dc = so.trang.find((t) => t.ten === "Da lam sach");
   const goc = so.trang.find((t) => t.ten === "Goc");
   bang(dc.toMau.length, 1);
   bang(goc.toMau, undefined, "trang gốc tuyệt đối không được tô");
@@ -2054,7 +2192,7 @@ ca("vượt ngưỡng vùng thì báo lại số vùng đã bỏ để vỏ còn
   const o = [];
   for (let h = 0; h < 40; h++) o.push({ hang: h, cot: 0 });
   for (let c = 1; c <= 6; c++) o.push({ hang: 60, cot: c });
-  const r = await toVung(Excel, "Doi chieu", o, { toiDa: 3 });
+  const r = await toVung(Excel, "Da lam sach", o, { toiDa: 3 });
   bang(r.soVung, 3);
   bang(r.soVungBo, 4);
   dung(r.soODaBo > 0, "phải nói cả số ô đã bỏ, không chỉ số vùng");

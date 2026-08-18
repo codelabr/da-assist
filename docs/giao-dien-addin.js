@@ -5,7 +5,7 @@ import { hoSoMoi, ghiTraLoi, quyetDinhTu } from "../src/phong-van/ho-so-don-vi.j
 import { docTrangHienTai } from "../src/vo-addin/doc-excel.js";
 import { ghiNhieuTrang } from "../src/vo-addin/ghi-excel.js";
 import { chonVung, toVung } from "../src/vo-addin/danh-dau.js";
-import { dungBoTrang, oCoVanDe, nhomTuCap } from "../src/xuat/bo-trang.js";
+import { dungBoTrang, nhomTuCap, oToMau } from "../src/xuat/bo-trang.js";
 
 const than = document.getElementById("than");
 const thanhBuoc = document.getElementById("thanh-buoc");
@@ -23,6 +23,19 @@ const thanhBuoc = document.getElementById("thanh-buoc");
  */
 const XL = () => (typeof window !== "undefined" && window.__DA_EXCEL) || Excel;
 const laXemThu = () => !!(typeof window !== "undefined" && window.__DA_EXCEL);
+
+/**
+ * Hai màu tô trên trang Đã làm sạch.
+ *
+ * Lấy đúng cặp màu mà Excel dùng sẵn cho định dạng có điều kiện — Good và Neutral.
+ * Cán bộ đã quen cặp này từ chính Excel, nên không phải học thêm quy ước nào; và cả
+ * hai đều nhạt, chữ đen trên nền vẫn đọc rõ khi in trắng đen.
+ *
+ * Màu KHÔNG BAO GIỜ là tín hiệu duy nhất: mọi ô xanh đều có mặt ở trang Nhật ký,
+ * mọi ô vàng đều có mặt ở trang Danh sách vấn đề, cả hai đều dưới dạng chữ.
+ */
+const MAU_XANH = "#C6EFCE"; // ô đã sửa, dòng giữ lại của nhóm trùng
+const MAU_VANG = "#FFEB9C"; // ô còn vấn đề, chưa sửa
 
 const BUOC = [
   { so: 1, ten: "Rà soát" },
@@ -416,7 +429,6 @@ function veBuoc3() {
 async function ghiKetQua() {
   bao("Đang ghi…");
   try {
-    const dsO = oCoVanDe(kq.bang, kq.phatHien);
     // Nhóm sửa mang các CẶP dòng trùng; gom thành nhóm để người dùng thấy cả cụm.
     const capTrung = deXuat
       .filter((d) => d.nhom === "S-TRUNG" && d.capTrung)
@@ -436,12 +448,28 @@ async function ghiKetQua() {
       tienTrinh: (n) => bao(`Đang ghi… ${soVN(n)} dòng`),
     });
 
-    // Tô trang Đối chiếu SAU khi đã ghi xong dữ liệu.
-    let chan = null;
-    const tenDoiChieu = ten.find((x) => /Doi chieu/i.test(x));
-    if (tenDoiChieu && dsO.length) {
-      bao("Đang tô ô có vấn đề…");
-      chan = await toVung(XL(), tenDoiChieu, dsO, { toiDa: 2000 });
+    // Tô trang Đã làm sạch, sau khi đã ghi xong dữ liệu.
+    //
+    // Vàng tô sau cùng để thắng khi chồng lên xanh: một ô vừa được sửa một lỗi vừa
+    // còn lỗi khác thì việc còn lại quan trọng hơn việc đã xong.
+    const mau = oToMau(kq.bang, kq.phatHien, ketQuaSua);
+    const tenDaSach = ten.find((x) => /Da lam sach/i.test(x));
+    let boQua = 0;
+    if (tenDaSach) {
+      // Ngân sách vùng dùng chung cho cả hai lượt tô, vì chặn 2.000 vùng là chặn
+      // để Excel không đứng, mà Excel thì không phân biệt vùng màu nào.
+      let conLai = 2000;
+      if (mau.xanh.length) {
+        bao("Đang tô những ô đã sửa…");
+        const r = await toVung(XL(), tenDaSach, mau.xanh, { toiDa: conLai, mau: MAU_XANH });
+        conLai -= r.soVung;
+        boQua += r.soVungBo;
+      }
+      if (mau.vang.length && conLai > 0) {
+        bao("Đang tô những ô còn vấn đề…");
+        const r = await toVung(XL(), tenDaSach, mau.vang, { toiDa: conLai, mau: MAU_VANG });
+        boQua += r.soVungBo;
+      }
     }
 
     ve(`
@@ -449,11 +477,16 @@ async function ghiKetQua() {
         <h2>Đã ghi xong</h2>
         <p>Đã tạo ${ten.length} trang tính mới:</p>
         <ul class="mo">${ten.map((x) => `<li>${thoat(x)}</li>`).join("")}</ul>
-        ${chan && chan.soVungBo
-          ? `<div class="luu-y">Trang Đối chiếu chỉ tô ${soVN(chan.soVung)} vùng lớn nhất;
-             còn ${soVN(chan.soVungBo)} vùng với ${soVN(chan.soODaBo)} ô KHÔNG được tô,
-             vì tô quá nhiều vùng sẽ làm Excel đứng. Trang Danh sách vấn đề vẫn có đủ,
-             không thiếu mục nào.</div>` : ""}
+        <div class="chu-giai">
+          <span><i style="background:${MAU_XANH}"></i> ô đã sửa, và dòng giữ lại của nhóm trùng</span>
+          <span><i style="background:${MAU_VANG}"></i> ô còn vấn đề, chưa sửa</span>
+        </div>
+        ${mau.soKhongDinhVi
+          ? `<div class="luu-y">${soVN(mau.soKhongDinhVi)} phát hiện nói về cả cột chứ không
+             chỉ ra được ô nào, nên KHÔNG tô màu. Xem đầy đủ ở trang Danh sách vấn đề.</div>` : ""}
+        ${boQua
+          ? `<div class="luu-y">Còn ${soVN(boQua)} vùng KHÔNG được tô, vì tô quá nhiều vùng
+             sẽ làm Excel đứng. Trang Danh sách vấn đề và trang Nhật ký vẫn có đủ.</div>` : ""}
         <div class="luu-y">Trang gốc <b>${thoat(tenTrangGoc)}</b> không bị đổi một ô nào.</div>
         <div class="hang-nut"><button class="chinh" id="ve-dau">Rà soát trang khác</button></div>
       </div>`);

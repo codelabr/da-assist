@@ -264,7 +264,7 @@ export function deXuatSua(bang, phatHien = [], qd = {}) {
  * Áp dụng các nhóm được chọn lên một BẢN SAO của dữ liệu.
  * Không chạm vào `bang`.
  *
- * @returns {{hang:Array, nhatKy:Array, tomTat:object}}
+ * @returns {{hang:Array, nhatKy:Array, oDaSua:Array, dongGiuTrung:Array, anhXaDong:Array, tomTat:object}}
  */
 export function apDung(bang, deXuat, maDaChon) {
   const chon = new Set(maDaChon);
@@ -273,6 +273,9 @@ export function apDung(bang, deXuat, maDaChon) {
   // Sao chép sâu phần dữ liệu.
   const dong = bang.dong.map((d) => d.slice());
   const nhatKy = [];
+  // Toạ độ ô đã đổi, theo chỉ số dòng TRƯỚC khi bỏ dòng trùng. Quy đổi sang
+  // chỉ số trên trang kết quả ở cuối hàm, khi đã biết dòng nào bị bỏ.
+  const oGoc = [];
 
   // Thứ tự cố định: cắt khoảng trắng → thống nhất hoa thường → chuẩn hoá ngày.
   // Ngược thứ tự này thì phép sau không nhận ra giá trị mà phép trước vừa sửa.
@@ -288,6 +291,7 @@ export function apDung(bang, deXuat, maDaChon) {
         // tưởng xong, thực ra vẫn hỏng.
         if (khongDoi(hienTai, t.moi)) continue;
         dong[t.dong][t.cot] = t.moi;
+        oGoc.push({ dong: t.dong, cot: t.cot });
         nhatKy.push({
           dong: t.dong + 2,
           cot: t.tenCot,
@@ -301,11 +305,13 @@ export function apDung(bang, deXuat, maDaChon) {
 
   // Bỏ dòng làm sau cùng, để số dòng trong nhật ký còn khớp bản gốc.
   let boDong = [];
+  const dongGiuLai = [];
   const dTrung = dsChon.find((x) => x.nhom === NHOM.TRUNG);
   if (dTrung) {
     boDong = dTrung.boDong;
     const tap = new Set(boDong);
     const giu = new Map((dTrung.capTrung || []).map((c) => [c[1], c[0]]));
+    dongGiuLai.push(...giu.values());
     for (const i of boDong) {
       nhatKy.push({
         dong: i + 2,
@@ -318,9 +324,47 @@ export function apDung(bang, deXuat, maDaChon) {
     for (let i = dong.length - 1; i >= 0; i--) if (tap.has(i)) dong.splice(i, 1);
   }
 
+  // Quy đổi toạ độ ô đã đổi sang chỉ số trên TRANG KẾT QUẢ.
+  //
+  // Hai phép dịch, cả hai đều dễ quên và cả hai đều làm lệch màu đúng một dòng
+  // nếu bỏ sót: bỏ dòng trùng làm mọi dòng phía sau dồn lên, và trang kết quả có
+  // thêm hàng tiêu đề ở trên cùng.
+  const boTap = new Set(boDong);
+  const anhXa = new Map();
+  let k = 0;
+  for (let i = 0; i < bang.dong.length; i++) {
+    if (boTap.has(i)) continue;
+    anhXa.set(i, k);
+    k++;
+  }
+  const oDaSua = [];
+  for (const o of oGoc) {
+    if (!anhXa.has(o.dong)) continue; // ô nằm trên dòng đã bị bỏ
+    oDaSua.push({ hang: anhXa.get(o.dong) + 1, cot: o.cot });
+  }
+
+  // Dòng ĐƯỢC GIỮ của mỗi nhóm trùng, tính theo chỉ số trên trang kết quả.
+  //
+  // Dòng bị bỏ thì không còn trên trang ấy nữa nên không đánh dấu được; thứ đáng
+  // đánh dấu là dòng ở lại, để người dùng biết dòng này đã nuốt một bản ghi trùng
+  // chứ không phải một dòng bình thường.
+  const dongGiuTrung = [];
+  for (const i of new Set(dongGiuLai)) {
+    if (anhXa.has(i)) dongGiuTrung.push(anhXa.get(i) + 1);
+  }
+  dongGiuTrung.sort((a, b) => a - b);
+
+  // Ánh xạ dòng gốc sang dòng kết quả, để lớp tô quy đổi được toạ độ của những
+  // phát hiện CHƯA được sửa. Trả về mảng thay cho Map để dùng lại được ở mọi vỏ.
+  const anhXaDong = new Array(bang.dong.length).fill(-1);
+  for (const [goc, moi] of anhXa) anhXaDong[goc] = moi;
+
   return {
     hang: [bang.tieuDe.slice(), ...dong],
     nhatKy,
+    oDaSua,
+    dongGiuTrung,
+    anhXaDong,
     tomTat: {
       soNhomApDung: dsChon.length,
       soODaSua: nhatKy.filter((x) => x.cot !== "(toàn dòng)").length,

@@ -118,11 +118,13 @@ export function kiemThoiGian(bang, tuyChon = {}) {
     if (cTruoc == null || cSau == null || cTruoc === cSau) continue;
 
     const viPham = [];
+    const dongLoi = [];
     for (let i = 0; i < bang.dong.length; i++) {
       const a = ngayCua(bang.dong[i][cTruoc], thuTu);
       const b = ngayCua(bang.dong[i][cSau], thuTu);
       if (!a || !b) continue;
       if (b.getTime() < a.getTime()) {
+        dongLoi.push(i);
         viPham.push(`dòng ${soHang(i)}: ${tenKhaiNiem(cap.sau)} ${ve(b)} trước ${tenKhaiNiem(cap.truoc)} ${ve(a)}`);
       }
     }
@@ -136,6 +138,7 @@ export function kiemThoiGian(bang, tuyChon = {}) {
       soDong: viPham.length,
       moTa: `${viPham.length} dòng có ${cap.vi}.`,
       viDu: viPham.slice(0, 5),
+      dongLoi,
       deXuat: "Đối chiếu hai cột với sổ nguồn; một trong hai ngày bị ghi sai.",
     });
   }
@@ -155,9 +158,10 @@ export function kiemThoiGian(bang, tuyChon = {}) {
       const mo = (bang.cot || []).find((c) => c.chiSo === chiSoCot);
       if (!mo) continue;
       const sau = [];
+      const dongLoi = [];
       for (let i = 0; i < bang.dong.length; i++) {
         const d = ngayCua(bang.dong[i][mo.chiSo], thuTu);
-        if (d && d.getTime() > moc) sau.push(`dòng ${soHang(i)}: ${ve(d)}`);
+        if (d && d.getTime() > moc) { dongLoi.push(i); sau.push(`dòng ${soHang(i)}: ${ve(d)}`); }
       }
       if (!sau.length) continue;
       phat(ds, {
@@ -170,6 +174,7 @@ export function kiemThoiGian(bang, tuyChon = {}) {
           `${sau.length} ô mang ngày nằm trong tương lai, sau ngày ${ve(homNay)}. ` +
           "Sự việc đã ghi vào sổ thì không thể xảy ra ở tương lai.",
         viDu: sau.slice(0, 5),
+        dongLoi,
         deXuat: "Kiểm lại: thường là gõ sai năm, hoặc lẫn thứ tự ngày với tháng.",
       });
     }
@@ -192,12 +197,16 @@ export function kiemThoiGian(bang, tuyChon = {}) {
     const cb = kn.theoMa.get(b);
     if (ca == null || cb == null) continue;
     const xa = [];
+    const dongLoi = [];
     for (let i = 0; i < bang.dong.length; i++) {
       const da = ngayCua(bang.dong[i][ca], thuTu);
       const db = ngayCua(bang.dong[i][cb], thuTu);
       if (!da || !db) continue;
       const ngay = Math.round((db.getTime() - da.getTime()) / 86400000);
-      if (ngay > nguong) xa.push(`dòng ${soHang(i)}: cách ${ngay.toLocaleString("vi-VN")} ngày`);
+      if (ngay > nguong) {
+        dongLoi.push(i);
+        xa.push(`dòng ${soHang(i)}: cách ${ngay.toLocaleString("vi-VN")} ngày`);
+      }
     }
     if (!xa.length) continue;
     phat(ds, {
@@ -211,6 +220,7 @@ export function kiemThoiGian(bang, tuyChon = {}) {
         "thường ghi cùng một sự việc. Không hẳn là lỗi, nhưng nếu tính độ trễ theo cặp cột " +
         "này thì con số sẽ bị các dòng ấy kéo đi.",
       viDu: xa.slice(0, 5),
+      dongLoi,
       deXuat: "Xem lại vài dòng để biết đây là độ trễ thật hay là ngày bị ghi sai.",
     });
   }
