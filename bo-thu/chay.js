@@ -19,7 +19,7 @@ import {
   sinhDanhSachY,
 } from "./mau.js";
 
-import { boDau, chuanHoa, khopKhoa } from "../src/bang/../tien-ich/chuoi.js";
+import { boDau, chuanHoa, hienKhoangTrang, khopKhoa } from "../src/bang/../tien-ich/chuoi.js";
 import { DANG, doanNgay, khoangKy, layNam } from "../src/tien-ich/ngay.js";
 import { taoBang, timHangTieuDe } from "../src/bang/tao-bang.js";
 import { suyKieuBang, KIEU } from "../src/bang/suy-kieu.js";
@@ -1893,6 +1893,36 @@ ca("Y10.6 bắt mã đơn vị ứng với nhiều tên khác nhau", () => {
 });
 
 /* ══════════════════════════════════════════════════════════ */
+nhomCa("Hiện khoảng trắng đáng ngờ");
+
+ca("đánh dấu khoảng trắng thừa ở đầu, ở cuối và chỗ hai dấu cách liền", () => {
+  bang(hienKhoangTrang("  Hà Nội"), "␣␣Hà Nội");
+  bang(hienKhoangTrang("Hà Nội  "), "Hà Nội␣␣");
+  bang(hienKhoangTrang("Hà  Nội"), "Hà␣␣Nội");
+  bang(hienKhoangTrang("\tHà Nội"), "␣Hà Nội");
+});
+
+ca("KHÔNG đánh dấu dấu cách bình thường giữa các từ — ca âm", () => {
+  // Bản đầu thay mọi dấu cách, làm cả dòng thành một từ dài 1.614 điểm ảnh trong
+  // khung rộng 326 nên task pane phải cuộn ngang, và chữ cũng thành khó đọc.
+  const s = "dòng 2: ngày kết thúc điều trị 05/01/2019 trước ngày bắt đầu";
+  bang(hienKhoangTrang(s), s);
+  sai(hienKhoangTrang(s).includes("␣"), "câu bình thường không được có ký hiệu nào");
+});
+
+ca("giữ nguyên chỗ ngắt dòng để chữ còn xuống hàng được", () => {
+  const s = "dòng 2: giá trị A\ndòng 3: giá trị B";
+  const r = hienKhoangTrang(s);
+  dung(r.includes("\n"), "phải giữ ký tự xuống dòng");
+  bang(r.split(" ").length, s.split(" ").length, "số dấu cách phải giữ nguyên");
+});
+
+ca("ô trống và giá trị không phải chuỗi không làm hỏng hàm", () => {
+  bang(hienKhoangTrang(null), "");
+  bang(hienKhoangTrang(undefined), "");
+  bang(hienKhoangTrang(42), "42");
+});
+
 nhomCa("Gom ô thành vùng để tô");
 
 ca("gộp các dòng liên tiếp trong cùng cột thành một dải", () => {

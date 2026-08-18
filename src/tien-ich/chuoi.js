@@ -57,6 +57,26 @@ export function khopBatKy(dsKhoa, tenCot) {
   return dsKhoa.some((k) => khopKhoa(k, tenCot));
 }
 
+/**
+ * Phơi ra khoảng trắng ĐÁNG NGỜ để mắt người thấy được.
+ *
+ * Đáng ngờ nghĩa là: thừa ở đầu dòng, thừa ở cuối dòng, hoặc từ hai dấu cách liền
+ * nhau. Đó là những chỗ mắt không thấy mà máy tính là giá trị khác — `"Hà Nội "`
+ * và `"Hà Nội"` là hai nhóm riêng khi tổng hợp.
+ *
+ * KHÔNG đánh dấu mọi dấu cách. Bản đầu làm thế và hỏng cả hai đường: chữ thành khó
+ * đọc (`dòng␣2:␣ngày␣kết␣thúc`), và cả dòng mất hết chỗ ngắt nên thành một từ dài
+ * 1.614 điểm ảnh trong khung rộng 326 — task pane phải cuộn ngang mới đọc hết.
+ */
+export function hienKhoangTrang(s) {
+  const dau = (m) => "␣".repeat(m.length);
+  return String(s == null ? "" : s)
+    .replace(/^[ \t]+/gm, dau)
+    .replace(/[ \t]+$/gm, dau)
+    .replace(/ {2,}/g, dau)
+    .replace(/\t/g, "→");
+}
+
 /** Có phải chuỗi mang nghĩa không, hay chỉ là ký tự rác. */
 export function coNghia(s) {
   return /[A-Za-z0-9À-ỹ]{3}/.test(String(s == null ? "" : s));

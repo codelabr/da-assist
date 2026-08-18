@@ -1,4 +1,5 @@
 import { raSoat, deXuatSua, apDung, trangNhatKy, MUC } from "../src/index.js";
+import { hienKhoangTrang } from "../src/tien-ich/chuoi.js";
 import { sinhCauHoi, VIEC } from "../src/phong-van/cau-hoi.js";
 import { hoSoMoi, ghiTraLoi, quyetDinhTu } from "../src/phong-van/ho-so-don-vi.js";
 import { docTrangHienTai } from "../src/vo-addin/doc-excel.js";
@@ -73,9 +74,12 @@ const thoat = (s) => String(s == null ? "" : s)
 
 const soVN = (n) => Number(n || 0).toLocaleString("vi-VN");
 
-/** Hiện khoảng trắng và ký tự xuống dòng, nếu không thì ô lỗi trông y hệt ô đúng. */
+/**
+ * Phơi khoảng trắng đáng ngờ rồi thoát HTML. Phần đánh dấu nằm ở hienKhoangTrang
+ * trong src/tien-ich/chuoi.js để bộ thử đo được — nó từng gây một lỗi bố cục thật.
+ */
 function hienRo(s) {
-  return thoat(s).replace(/ /g, "␣").replace(/\n/g, "↵");
+  return thoat(hienKhoangTrang(s)).replace(/\n/g, "↵\n");
 }
 
 function veThanhBuoc() {

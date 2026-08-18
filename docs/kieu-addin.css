@@ -37,6 +37,8 @@
   --chu-mo: #605e5c;
   --chu-rat-mo: #8a8886;
   --nhan: #0f6cbd;
+  --nhan-dam: #0b5495;
+  --nhan-chu: #ffffff;
   --nhan-nhat: #eff6fc;
   --do: #a4262c;
   --do-nhat: #fdf3f4;
@@ -57,6 +59,8 @@
   --chu-mo: #b3b0ad;
   --chu-rat-mo: #8a8886;
   --nhan: #6cb8f6;
+  --nhan-dam: #8ecdf9;
+  --nhan-chu: #10233a;
   --nhan-nhat: #12212f;
   --do: #f1707b;
   --do-nhat: #2d1619;
@@ -139,9 +143,21 @@ button {
 }
 button:hover:not(:disabled) { background: var(--nen-3); }
 button:disabled { opacity: 0.45; cursor: default; }
-button.chinh { background: var(--nhan); border-color: var(--nhan); color: #fff; }
-button.chinh:hover:not(:disabled) { filter: brightness(1.08); }
-button.chinh:disabled { filter: none; }
+/* Nút chính phải tự khai ĐỦ nền, viền và màu chữ cho cả lúc rê chuột.
+   Quy tắc `button:hover:not(:disabled)` ở trên có độ ưu tiên 0,2,1, cao hơn
+   `button.chinh` (0,1,1), nên nếu nút chính chỉ đổi độ sáng thì lúc rê chuột
+   nền xanh bị thay bằng xám nhạt trong khi chữ vẫn trắng — chữ biến mất.
+   Màu chữ cũng lấy theo giao diện chứ không cố định trắng: nền nhấn của giao
+   diện tối là xanh sáng, chữ trắng trên đó gần như không đọc được. */
+button.chinh {
+  background: var(--nhan); border-color: var(--nhan); color: var(--nhan-chu);
+}
+button.chinh:hover:not(:disabled) {
+  background: var(--nhan-dam); border-color: var(--nhan-dam); color: var(--nhan-chu);
+}
+button.chinh:disabled {
+  background: var(--nhan); border-color: var(--nhan); color: var(--nhan-chu);
+}
 
 /* ── Phát hiện ─────────────────────────────────────────────────────── */
 
@@ -174,9 +190,17 @@ button.chinh:disabled { filter: none; }
 .bao .cot { font-weight: 600; font-size: 12.5px; }
 .bao .dem-dong { font-size: 11px; color: var(--chu-rat-mo); margin-left: auto; }
 .bao p { margin: 5px 0 0; font-size: 12.5px; }
+/* overflow-wrap: anywhere là lưới an toàn, không phải cách sửa chính.
+   Dữ liệu thật có những giá trị dài không một dấu cách — mã bệnh án dán từ hệ
+   thống khác, chuỗi lỗi công thức — và một giá trị như thế đủ để đẩy cả task pane
+   ra ngoài khung. Thà ngắt giữa chữ còn hơn bắt người dùng cuộn ngang. */
 .bao .vi-du {
   font: 11.5px/1.5 "JetBrains Mono", monospace; color: var(--chu-mo);
-  white-space: pre-wrap; margin-top: 5px;
+  white-space: pre-wrap; overflow-wrap: anywhere; margin-top: 5px;
+}
+.hoi .vi-du {
+  font: 11.5px/1.5 "JetBrains Mono", monospace; color: var(--chu-mo);
+  white-space: pre-wrap; overflow-wrap: anywhere; margin: 0 0 7px;
 }
 .bao .de-xuat { color: var(--luc); font-size: 12px; }
 .bao .chi-dan { font-size: 11px; color: var(--chu-rat-mo); margin-top: 5px; }
